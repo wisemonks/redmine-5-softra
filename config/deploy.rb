@@ -3,7 +3,7 @@
 
 set :application, "softra-redmine"
 set :repo_url, "git@github.com:wisemonks/redmine-5-softra.git"
-set :branch, "master"
+set :branch, "gem-install"
 
 set :deploy_to, '/home/op'
 set :rails_env, "production"
