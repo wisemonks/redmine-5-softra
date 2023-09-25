@@ -13,8 +13,8 @@ gem 'mail', '~> 2.8.1'
 gem 'nokogiri', '~> 1.15.2'
 gem 'i18n', '~> 1.14.1'
 gem 'rbpdf', '~> 1.21.1'
-gem 'addressable'
-gem 'rubyzip', '~> 2.3.0'
+# gem 'addressable'
+# gem 'rubyzip', '~> 2.3.0'
 
 #  Ruby Standard Gems
 gem 'csv', '~> 3.2.6'
