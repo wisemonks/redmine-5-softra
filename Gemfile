@@ -14,7 +14,8 @@ gem 'nokogiri', '~> 1.15.2'
 gem 'i18n', '~> 1.14.1'
 gem 'rbpdf', '~> 1.21.1'
 # gem 'addressable'
-gem 'rubyzip'#, '~> 2.3.0'
+gem 'rubyzip'
+gem 'listen', '~> 3.3'
 
 #  Ruby Standard Gems
 gem 'csv', '~> 3.2.6'
@@ -97,7 +98,6 @@ else
 end
 
 group :development do
-  gem 'listen', '~> 3.3'
   gem "yard"
   gem 'ed25519'
   gem 'bcrypt_pbkdf'

@@ -137,17 +137,17 @@ class AttachmentsController < ApplicationController
   end
 
   def download_all
-    zip_data = Attachment.archive_attachments(@attachments)
-    if zip_data
-      file_name = "#{@container.class.to_s.downcase}-#{@container.id}-attachments.zip"
-      send_data(
-        zip_data,
-        :type => Redmine::MimeType.of(file_name),
-        :filename => file_name
-      )
-    else
-      render_404
-    end
+    # zip_data = Attachment.archive_attachments(@attachments)
+    # if zip_data
+    #   file_name = "#{@container.class.to_s.downcase}-#{@container.id}-attachments.zip"
+    #   send_data(
+    #     zip_data,
+    #     :type => Redmine::MimeType.of(file_name),
+    #     :filename => file_name
+    #   )
+    # else
+    #   render_404
+    # end
   end
 
   def update
