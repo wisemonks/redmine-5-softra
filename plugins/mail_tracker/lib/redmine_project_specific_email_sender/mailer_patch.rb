@@ -3,15 +3,32 @@ module RedmineProjectSpecificEmailSender
     def self.included(base)
       base.send(:include, InstanceMethods)
       base.class_eval do
-        alias_method_chain :mail, :project_specific_email
-        alias_method_chain :issue_add, :project_specific_email
-        alias_method_chain :issue_edit, :project_specific_email
-        alias_method_chain :document_added, :project_specific_email
-        alias_method_chain :attachments_added, :project_specific_email
-        alias_method_chain :news_added, :project_specific_email
-        alias_method_chain :message_posted, :project_specific_email
-        alias_method_chain :wiki_content_added, :project_specific_email
-        alias_method_chain :wiki_content_updated, :project_specific_email
+        alias_method :mail, :mail_with_project_specific_email
+        alias_method :mail_without_project_specific_email, :mail
+
+        alias_method :issue_add, :issue_add_with_project_specific_email
+        alias_method :issue_add_without_project_specific_email, :issue_add
+
+        alias_method :issue_edit, :issue_edit_with_project_specific_email
+        alias_method :issue_edit_without_project_specific_email, :issue_edit
+
+        alias_method :document_added, :document_added_with_project_specific_email
+        alias_method :document_added_without_project_specific_email, :document_added
+
+        alias_method :attachments_added, :attachments_added_with_project_specific_email
+        alias_method :attachments_added_without_project_specific_email, :attachments_added
+
+        alias_method :news_added, :news_added_with_project_specific_email
+        alias_method :news_added_without_project_specific_email, :news_added
+
+        alias_method :message_posted, :message_posted_with_project_specific_email
+        alias_method :message_posted_without_project_specific_email, :message_posted
+
+        alias_method :wiki_content_added, :wiki_content_added_with_project_specific_email
+        alias_method :wiki_content_added_without_project_specific_email, :wiki_content_added
+
+        alias_method :wiki_content_updated, :wiki_content_updated_with_project_specific_email
+        alias_method :wiki_content_updated_without_project_specific_email, :wiki_content_updated
       end
     end
 
