@@ -96,7 +96,5 @@ module RedmineApp
     if File.exist?(File.join(File.dirname(__FILE__), 'additional_environment.rb'))
       instance_eval File.read(File.join(File.dirname(__FILE__), 'additional_environment.rb'))
     end
-
-    config.hosts << '.softra.lt'
   end
 end
