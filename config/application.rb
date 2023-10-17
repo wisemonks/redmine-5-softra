@@ -98,5 +98,7 @@ module RedmineApp
     end
 
     config.hosts << 'softra.lt'
+    config.hosts << 'mail.softra.lt'
+    config.hosts << IPAddr.new('88.216.169.97')
   end
 end
