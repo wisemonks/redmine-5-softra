@@ -97,6 +97,6 @@ module RedmineApp
       instance_eval File.read(File.join(File.dirname(__FILE__), 'additional_environment.rb'))
     end
 
-    config.hosts << /.*\.softra\.lt/
+    config.hosts << 'mail.softra.lt'
   end
 end
