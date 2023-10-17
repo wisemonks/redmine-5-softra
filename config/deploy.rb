@@ -80,6 +80,23 @@ namespace :deploy do
   before "deploy:symlink:release", "clear_whenever"
 end
 
+namespace :puma do
+  task :start, :except => { :no_release => true } do
+    run "sudo systemctl start puma"
+  end
+  after "deploy:start", "puma:start"
+
+  task :stop, :except => { :no_release => true } do
+    run "sudo systemctl stop puma"
+  end
+  after "deploy:stop", "puma:stop"
+
+  task :restart, roles: :app do
+    run "sudo systemctl restart puma"
+  end
+  after "deploy:restart", "puma:restart"
+end
+
 # Default value for :linked_files is []
 append :linked_files, 'config/database.yml', 'config/secrets.yml', 'config/configuration.yml'
 # Default value for linked_dirs is []
