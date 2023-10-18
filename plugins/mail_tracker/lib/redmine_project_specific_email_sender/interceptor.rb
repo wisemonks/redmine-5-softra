@@ -12,17 +12,18 @@ module RedmineProjectSpecificEmailSender
         mail_source = MailSource.find_by(email_address: project_email)
 
         message.delivery_method(:smtp, mail_source.delivery_options) if mail_source
-        # message.delivery_method(:smtp, {
-        #   enable_starttls_auto:  mail_source.use_tls,
-        #   address:              mail_source.host,
-        #   port:                 mail_source.delivery_port || 587,
-        #   domain:               mail_source.domain,
-        #   authentication:       :login,
-        #   user_name:            mail_source.username,
-        #   password:             mail_source.password,
-        #   openssl_verify_mode:  'none',
-        # }) if mail_source
       end
     end
   end
 end
+
+# message.delivery_method(:smtp, {
+#   enable_starttls_auto:  mail_source.use_tls,
+#   address:              mail_source.host,
+#   port:                 mail_source.delivery_port || 587,
+#   domain:               mail_source.domain,
+#   authentication:       :login,
+#   user_name:            mail_source.username,
+#   password:             mail_source.password,
+#   openssl_verify_mode:  'none',
+# }) if mail_source
