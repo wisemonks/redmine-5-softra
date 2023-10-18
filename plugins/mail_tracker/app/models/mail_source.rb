@@ -333,7 +333,7 @@ class MailSource < ActiveRecord::Base
           end
           unless mail.from.present? && %w[support-ru support-en support-lt admin-ru admin-en
                                           admin-lt].include?(Mail::Address.new([mail.from].flatten.first).local)
-            # deliver(temp_mail)
+            deliver(temp_mail)
             p '---------------------------'
             p 'Mail delivered to:', temp_mail.to
             p '---------------------------'

@@ -2061,7 +2061,7 @@ class Issue < ActiveRecord::Base
 
   def send_notification
     if notify? && Setting.notified_events.include?('issue_added')
-      Mailer.deliver_issue_add(self)
+      # Mailer.deliver_issue_add(self)
     end
   end
 
