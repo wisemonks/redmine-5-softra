@@ -72,6 +72,7 @@ class Mailer < ActionMailer::Base
 
   # Builds a mail for notifying user about a new issue
   def issue_add(user, issue)
+    super
     redmine_headers 'Project' => issue.project.identifier,
                     'Issue-Tracker' => issue.tracker.name,
                     'Issue-Id' => issue.id,
@@ -127,6 +128,7 @@ class Mailer < ActionMailer::Base
   #     :subject => s
   # end
   def issue_edit(users, journal)
+    super
     issue = journal.journalized
     redmine_headers 'Project' => issue.project.identifier,
                     'Issue-Id' => issue.id,
@@ -175,6 +177,7 @@ class Mailer < ActionMailer::Base
 
   # Builds a mail to user about a new document.
   def document_added(user, document, author)
+    super
     redmine_headers 'Project' => document.project.identifier
     @author = author
     @document = document
@@ -197,6 +200,7 @@ class Mailer < ActionMailer::Base
 
   # Builds a mail to user about new attachements.
   def attachments_added(user, attachments)
+    super
     container = attachments.first.container
     added_to = ''
     added_to_url = ''
@@ -241,6 +245,7 @@ class Mailer < ActionMailer::Base
 
   # Builds a mail to user about a new news.
   def news_added(user, news)
+    super
     redmine_headers 'Project' => news.project.identifier
     @author = news.author
     message_id news
@@ -292,6 +297,7 @@ class Mailer < ActionMailer::Base
 
   # Builds a mail to user about a new message.
   def message_posted(user, message)
+    super
     redmine_headers 'Project' => message.project.identifier,
                     'Topic-Id' => (message.parent_id || message.id)
     @author = message.author
@@ -320,6 +326,7 @@ class Mailer < ActionMailer::Base
 
   # Builds a mail to user about a new wiki content.
   def wiki_content_added(user, wiki_content)
+    super
     redmine_headers 'Project' => wiki_content.project.identifier,
                     'Wiki-Page-Id' => wiki_content.page.id
     @author = wiki_content.author
@@ -349,6 +356,7 @@ class Mailer < ActionMailer::Base
 
   # Builds a mail to user about an update of the specified wiki content.
   def wiki_content_updated(user, wiki_content)
+    super
     redmine_headers 'Project' => wiki_content.project.identifier,
                     'Wiki-Page-Id' => wiki_content.page.id
     @author = wiki_content.author
