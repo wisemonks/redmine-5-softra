@@ -42,7 +42,7 @@ module RedmineProjectSpecificEmailSender
       end
 
       def issue_add_with_project_specific_email(*args)
-        @project = args.first.project
+        @project = args.last.project
         @issue_url_by_project = url_for(:controller => 'issues', :action => 'show', :id => args.first, :host => @project.crm_host_name)
         issue_add_without_project_specific_email(*args)
       end
