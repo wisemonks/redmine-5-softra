@@ -140,7 +140,7 @@ class MailSource < ActiveRecord::Base
   end
 
   def deliver(mail)
-    # mail.delivery_method :smtp, delivery_options
+    mail.delivery_method :smtp, delivery_options
 
     MailTrackerCustomLogger.logger.info("Using SMTP #{host}, PORT: #{delivery_port}, DOMAIN:#{domain}, USERNAME: #{username}")
     MailTrackerCustomLogger.logger.info("Delivering from #{mail.from} to #{mail.to}: #{mail.subject}")
