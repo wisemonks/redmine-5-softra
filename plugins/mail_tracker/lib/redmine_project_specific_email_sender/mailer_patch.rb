@@ -19,7 +19,7 @@ module RedmineProjectSpecificEmailSender
 
       def issue_edit(*args)
         @project = args.last.journalized.project
-        @issue_url_by_project = url_for(:controller => 'issues', :action => 'show', :id => args.first.journalized, :anchor => "change-#{args.first.id}", :host => @project.crm_host_name)
+        @issue_url_by_project = url_for(:controller => 'issues', :action => 'show', :id => args.last.journalized, :anchor => "change-#{args.first.id}", :host => @project.crm_host_name)
       end
 
       def document_added(*args)
