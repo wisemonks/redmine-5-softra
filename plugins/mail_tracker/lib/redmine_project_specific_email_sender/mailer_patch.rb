@@ -18,32 +18,32 @@ module RedmineProjectSpecificEmailSender
       end
 
       def issue_edit(*args)
-        @project = args.first.journalized.project
+        @project = args.last.journalized.project
         @issue_url_by_project = url_for(:controller => 'issues', :action => 'show', :id => args.first.journalized, :anchor => "change-#{args.first.id}", :host => @project.crm_host_name)
       end
 
       def document_added(*args)
-        @project = args.first.project
+        @project = args.last.project
       end
 
       def attachments_added(*args)
-        @project = args.first.first.container.project
+        @project = args.last.first.container.project
       end
 
       def news_added(*args)
-        @project = args.first.project
+        @project = args.last.project
       end
 
       def message_posted(*args)
-        @project = args.first.board.project
+        @project = args.last.board.project
       end
 
       def wiki_content_added(*args)
-        @project = args.first.project
+        @project = args.last.project
       end
 
       def wiki_content_updated(*args)
-        @project = args.first.project
+        @project = args.last.project
       end
     end
   end
