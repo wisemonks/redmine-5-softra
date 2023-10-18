@@ -333,7 +333,10 @@ class MailSource < ActiveRecord::Base
           end
           unless mail.from.present? && %w[support-ru support-en support-lt admin-ru admin-en
                                           admin-lt].include?(Mail::Address.new([mail.from].flatten.first).local)
-            deliver(temp_mail)
+            # deliver(temp_mail)
+            p '---------------------------'
+            p 'Mail delivered to:', temp_mail.to
+            p '---------------------------'
             issue.update_column(:reply_message_id, temp_mail.message_id)
           end
           mark_as_seen(mail.message_id) if mail.message_id.present?
