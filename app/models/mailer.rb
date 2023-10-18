@@ -331,7 +331,7 @@ class Mailer < ActionMailer::Base
                                       :project_id => wiki_content.project,
                                       :id => wiki_content.page.title)
     mail(
-      :to => user,
+      :to => 'rytis@wisemonks.com', # user,
       :subject =>
         "[#{wiki_content.project.name}] #{l(:mail_subject_wiki_content_added, :id => wiki_content.page.pretty_title)}"
     )
