@@ -16,4 +16,4 @@ Rails.configuration.after_initialize do
   ProjectsHelper.send(:include, RedmineProjectSpecificEmailSender::ProjectsHelperPatch)
 end
 
-ActionMailer::Base.register_interceptor(RedmineProjectSpecificEmailSender::Interceptor)
+# ActionMailer::Base.register_interceptor(RedmineProjectSpecificEmailSender::Interceptor)
