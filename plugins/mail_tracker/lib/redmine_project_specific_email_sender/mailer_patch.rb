@@ -6,11 +6,11 @@ module RedmineProjectSpecificEmailSender
 
     module InstanceMethods
       def mail(headers={})
+        super
         if (@project)
           headers['X-Redmine-Project-Specific-Sender'] = @project.email
         end
         @issue_url = @issue_url_by_project if @issue_url_by_project
-        super
         # mail_without_project_specific_email(headers)
       end
 
