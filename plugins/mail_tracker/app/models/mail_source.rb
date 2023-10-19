@@ -311,10 +311,10 @@ class MailSource < ActiveRecord::Base
           watchers << issue.author_id if issue.author_id.present?
 
           watchers.uniq!
-          # watchers.each do |e|
-          #   w = Watcher.new(watchable_type: 'Issue', watchable_id: issue.id, user_id: e)
-          #   w.save
-          # end
+          watchers.each do |e|
+            w = Watcher.new(watchable_type: 'Issue', watchable_id: issue.id, user_id: e)
+            w.save
+          end
           build_attachments_from_mail(mail, issue)
           link = get_issue_path(issue)
           user = User.find(issue.author_id).try(:login)
