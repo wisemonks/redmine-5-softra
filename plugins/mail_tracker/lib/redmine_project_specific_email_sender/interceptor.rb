@@ -13,6 +13,9 @@ module RedmineProjectSpecificEmailSender
 
         message.delivery_method(:smtp, mail_source.delivery_options) if mail_source
       end
+
+      MailTrackerCustomLogger.logger.info("Interceptor: Using SMTP #{message.delivery_method.settings[:address]}, PORT: #{message.delivery_method.settings[:port]}, DOMAIN:#{message.delivery_method.settings[:domain]}, USERNAME: #{message.delivery_method.settings[:user_name]}")
+      MailTrackerCustomLogger.logger.info("Interceptor: Delivering from #{message.from} to #{message.to}: #{message.subject}")
     end
   end
 end

@@ -158,7 +158,7 @@ class Mailer < ActionMailer::Base
     issue = journal.journalized.reload
     # to = journal.notified_users
     # cc = journal.notified_watchers | journal.notified_mentions | journal.journalized.notified_mentions - to
-    issue_edit(users, journal).deliver_later
+    issue_edit(users, journal).deliver!
     # users.each do |user|
     #   issue_edit(user, journal).deliver_now
     # end
