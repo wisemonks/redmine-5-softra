@@ -46,7 +46,8 @@ class MailSource < ActiveRecord::Base
       address: receive_host,
       user_name: username,
       enable_ssl: use_ssl,
-      password: password
+      password: password,
+      authentication: 'login'
     }
   end
 

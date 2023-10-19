@@ -72,7 +72,6 @@ class Mailer < ActionMailer::Base
 
   # Builds a mail for notifying user about a new issue
   def issue_add(user, issue)
-    super
     redmine_headers 'Project' => issue.project.identifier,
                     'Issue-Tracker' => issue.tracker.name,
                     'Issue-Id' => issue.id,
@@ -88,6 +87,7 @@ class Mailer < ActionMailer::Base
     subject = "[#{issue.project.name} - #{issue.tracker.name} ##{issue.id}]"
     subject += " (#{issue.status.name})" if Setting.show_status_changes_in_mail_subject?
     subject += " #{issue.subject}"
+    super
     mail :to => user,
       :subject => subject
   end
@@ -128,7 +128,6 @@ class Mailer < ActionMailer::Base
   #     :subject => s
   # end
   def issue_edit(users, journal)
-    super
     issue = journal.journalized
     redmine_headers 'Project' => issue.project.identifier,
                     'Issue-Id' => issue.id,
@@ -145,6 +144,7 @@ class Mailer < ActionMailer::Base
     @journal = journal
     @journal_details = journal.visible_details(@users.first)
     @issue_url = url_for(:controller => 'issues', :action => 'show', :id => issue, :anchor => "change-#{journal.id}")
+    super
     mail :to => @users,
       :cc => @users,
       :subject => s
@@ -158,7 +158,7 @@ class Mailer < ActionMailer::Base
     issue = journal.journalized.reload
     # to = journal.notified_users
     # cc = journal.notified_watchers | journal.notified_mentions | journal.journalized.notified_mentions - to
-    issue_edit(users, journal).deliver_now
+    issue_edit(users, journal).deliver_later
     # users.each do |user|
     #   issue_edit(user, journal).deliver_now
     # end
@@ -177,12 +177,12 @@ class Mailer < ActionMailer::Base
 
   # Builds a mail to user about a new document.
   def document_added(user, document, author)
-    super
     redmine_headers 'Project' => document.project.identifier
     @author = author
     @document = document
     @user = user
     @document_url = url_for(:controller => 'documents', :action => 'show', :id => document)
+    super
     mail :to => user,
       :subject => "[#{document.project.name}] #{l(:label_document_new)}: #{document.title}"
   end
@@ -200,7 +200,6 @@ class Mailer < ActionMailer::Base
 
   # Builds a mail to user about new attachements.
   def attachments_added(user, attachments)
-    super
     container = attachments.first.container
     added_to = ''
     added_to_url = ''
@@ -221,6 +220,7 @@ class Mailer < ActionMailer::Base
     @user = user
     @added_to = added_to
     @added_to_url = added_to_url
+    super
     mail :to => user,
       :subject => "[#{container.project.name}] #{l(:label_attachment_new)}"
   end
@@ -245,7 +245,6 @@ class Mailer < ActionMailer::Base
 
   # Builds a mail to user about a new news.
   def news_added(user, news)
-    super
     redmine_headers 'Project' => news.project.identifier
     @author = news.author
     message_id news
@@ -253,6 +252,7 @@ class Mailer < ActionMailer::Base
     @news = news
     @user = user
     @news_url = url_for(:controller => 'news', :action => 'show', :id => news)
+    super
     mail :to => user,
       :subject => "[#{news.project.name}] #{l(:label_news)}: #{news.title}"
   end
@@ -297,7 +297,6 @@ class Mailer < ActionMailer::Base
 
   # Builds a mail to user about a new message.
   def message_posted(user, message)
-    super
     redmine_headers 'Project' => message.project.identifier,
                     'Topic-Id' => (message.parent_id || message.id)
     @author = message.author
@@ -306,6 +305,7 @@ class Mailer < ActionMailer::Base
     @message = message
     @user = user
     @message_url = url_for(message.event_url)
+    super
     mail :to => user,
       :subject => "[#{message.board.project.name} - #{message.board.name} - msg#{message.root.id}] #{message.subject}"
   end
@@ -326,7 +326,6 @@ class Mailer < ActionMailer::Base
 
   # Builds a mail to user about a new wiki content.
   def wiki_content_added(user, wiki_content)
-    super
     redmine_headers 'Project' => wiki_content.project.identifier,
                     'Wiki-Page-Id' => wiki_content.page.id
     @author = wiki_content.author
@@ -336,6 +335,7 @@ class Mailer < ActionMailer::Base
     @wiki_content_url = url_for(:controller => 'wiki', :action => 'show',
                                       :project_id => wiki_content.project,
                                       :id => wiki_content.page.title)
+    super
     mail(
       :to => 'rytis@wisemonks.com', # user,
       :subject =>
@@ -356,7 +356,6 @@ class Mailer < ActionMailer::Base
 
   # Builds a mail to user about an update of the specified wiki content.
   def wiki_content_updated(user, wiki_content)
-    super
     redmine_headers 'Project' => wiki_content.project.identifier,
                     'Wiki-Page-Id' => wiki_content.page.id
     @author = wiki_content.author
@@ -371,6 +370,7 @@ class Mailer < ActionMailer::Base
       url_for(:controller => 'wiki', :action => 'diff',
               :project_id => wiki_content.project, :id => wiki_content.page.title,
               :version => wiki_content.version)
+    super
     mail(
       :to => user,
       :subject =>
