@@ -3,15 +3,15 @@ module RedmineProjectSpecificEmailSender
 
     def self.included(base)
       base.send(:include, InstanceMethods)
-      base.class_eval do
-        alias_method :project_settings_tabs, :project_settings_tabs_with_outbound_email_tab
-      end
+      # base.class_eval do
+      #   alias_method :project_settings_tabs, :project_settings_tabs_with_outbound_email_tab
+      # end
     end
 
     module InstanceMethods
-      def project_settings_tabs_with_outbound_email_tab
+      def project_settings_tabs(tabs)#_with_outbound_email_tab
         # Grab standard set of tabs
-        tabs = project_settings_tabs_without_outbound_email_tab
+        # tabs = project_settings_tabs_without_outbound_email_tab
         tabs.push({ :name => 'outbound_email',
                       :action => :edit_project_email,
                       :partial => 'project_emails/edit',
