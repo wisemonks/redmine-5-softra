@@ -93,6 +93,6 @@ Rails.application.configure do
 
   # No email in production log
   config.action_mailer.logger = nil
-  config.hosts << 'mail.softra.lt'
-  config.hosts.clear
+  config.hosts << 'crm.softra.lt'
+  config.hosts << 'new-crm.softra.lt'
 end
