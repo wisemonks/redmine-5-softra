@@ -6,7 +6,7 @@
 
 <h2><%= l(:label_spent_time) %></h2>
 
-<%= form_tag(params.slice(:project_id, :issue_id), :method => :get, :id => 'query_form') do %>
+<%= form_tag(params.permit!.slice(:project_id, :issue_id), :method => :get, :id => 'query_form') do %>
 <%= render :partial => 'date_range' %>
 <% end %>
 
@@ -27,7 +27,7 @@
 
 <div id="csv-export-options" style="display:none;">
   <h3 class="title"><%= l(:label_export_options, :export_format => 'CSV') %></h3>
-  <%= form_tag(params.slice(:project_id, :issue_id).merge(:format => 'csv', :page=>nil), :method => :get, :id => 'csv-export-form') do %>
+  <%= form_tag(params.permit!.slice(:project_id, :issue_id).merge(:format => 'csv', :page=>nil), :method => :get, :id => 'csv-export-form') do %>
   <%= query_hidden_tags @query %>
   <p>
     <label><%= radio_button_tag 'columns', '', true %> <%= l(:description_selected_columns) %></label><br />

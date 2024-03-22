@@ -44,6 +44,7 @@ module ProjectsHelper
     tabs.
       select {|tab| User.current.allowed_to?(tab[:action], @project)}.
       select {|tab| tab[:module].nil? || @project.module_enabled?(tab[:module])}
+    super(tabs)
   end
 
   def parent_project_select_tag(project)

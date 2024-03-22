@@ -34,6 +34,11 @@ class Issue < ActiveRecord::Base
   belongs_to :category, :class_name => 'IssueCategory'
 
   has_many :journals, :as => :journalized, :dependent => :destroy, :inverse_of => :journalized
+  has_many :visible_journals,
+    lambda {where(["(#{Journal.table_name}.private_notes = ? OR (#{Project.allowed_to_condition(User.current, :view_private_notes)}))", false])},
+    :class_name => 'Journal',
+    :as => :journalized
+
   has_many :time_entries, :dependent => :destroy
   has_and_belongs_to_many :changesets, lambda {order("#{Changeset.table_name}.committed_on ASC, #{Changeset.table_name}.id ASC")}
 

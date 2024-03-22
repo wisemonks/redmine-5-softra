@@ -6,7 +6,7 @@
 
 <h2><%= l(:label_spent_time) %></h2>
 
-<%= form_tag(params.slice(:project_id, :issue_id), :method => :get, :id => 'query_form') do %>
+<%= form_tag(params.permit!.slice(:project_id, :issue_id), :method => :get, :id => 'query_form') do %>
   <% @report.criteria.each do |criterion| %>
     <%= hidden_field_tag 'criteria[]', criterion, :id => nil %>
   <% end %>

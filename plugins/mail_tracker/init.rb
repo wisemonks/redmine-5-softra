@@ -10,8 +10,9 @@ Redmine::Plugin.register :mail_tracker do
     :partial => 'settings/mail_tracker_settings'
 end
 
-Proc.new do
-  Project.send(:prepend, RedmineProjectSpecificEmailSender::ProjectPatch)
-  Mailer.send(:prepend, RedmineProjectSpecificEmailSender::MailerPatch)
-  ProjectsHelper.send(:prepend, RedmineProjectSpecificEmailSender::ProjectsHelperPatch)
-end.call
+Rails.configuration.after_initialize do
+  Project.send(:include, RedmineProjectSpecificEmailSender::ProjectPatch)
+  Mailer.send(:include, RedmineProjectSpecificEmailSender::MailerPatch)
+  ProjectsHelper.send(:include, RedmineProjectSpecificEmailSender::ProjectsHelperPatch)
+  ActionMailer::Base.register_interceptor(RedmineProjectSpecificEmailSender::Interceptor)
+end

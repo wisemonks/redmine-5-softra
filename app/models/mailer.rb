@@ -33,7 +33,6 @@ class Mailer < ActionMailer::Base
   # The first argument of all actions of this Mailer must be a User (the recipient),
   # otherwise an ArgumentError is raised.
   def process(action, *args)
-    p args
     # user = args.first
     user = args.first.is_a?(Array) ? args.first.first : args.first
     raise ArgumentError, "First argument has to be a user, was #{user.inspect}" unless user.is_a?(User)
@@ -88,6 +87,7 @@ class Mailer < ActionMailer::Base
     subject = "[#{issue.project.name} - #{issue.tracker.name} ##{issue.id}]"
     subject += " (#{issue.status.name})" if Setting.show_status_changes_in_mail_subject?
     subject += " #{issue.subject}"
+    super
     mail :to => user,
       :subject => subject
   end
@@ -144,6 +144,7 @@ class Mailer < ActionMailer::Base
     @journal = journal
     @journal_details = journal.visible_details(@users.first)
     @issue_url = url_for(:controller => 'issues', :action => 'show', :id => issue, :anchor => "change-#{journal.id}")
+    super
     mail :to => @users,
       :cc => @users,
       :subject => s
@@ -157,7 +158,7 @@ class Mailer < ActionMailer::Base
     issue = journal.journalized.reload
     # to = journal.notified_users
     # cc = journal.notified_watchers | journal.notified_mentions | journal.journalized.notified_mentions - to
-    issue_edit(users, journal).deliver_now
+    issue_edit(users, journal).deliver!
     # users.each do |user|
     #   issue_edit(user, journal).deliver_now
     # end
@@ -181,6 +182,7 @@ class Mailer < ActionMailer::Base
     @document = document
     @user = user
     @document_url = url_for(:controller => 'documents', :action => 'show', :id => document)
+    super
     mail :to => user,
       :subject => "[#{document.project.name}] #{l(:label_document_new)}: #{document.title}"
   end
@@ -218,6 +220,7 @@ class Mailer < ActionMailer::Base
     @user = user
     @added_to = added_to
     @added_to_url = added_to_url
+    super
     mail :to => user,
       :subject => "[#{container.project.name}] #{l(:label_attachment_new)}"
   end
@@ -249,6 +252,7 @@ class Mailer < ActionMailer::Base
     @news = news
     @user = user
     @news_url = url_for(:controller => 'news', :action => 'show', :id => news)
+    super
     mail :to => user,
       :subject => "[#{news.project.name}] #{l(:label_news)}: #{news.title}"
   end
@@ -301,6 +305,7 @@ class Mailer < ActionMailer::Base
     @message = message
     @user = user
     @message_url = url_for(message.event_url)
+    super
     mail :to => user,
       :subject => "[#{message.board.project.name} - #{message.board.name} - msg#{message.root.id}] #{message.subject}"
   end
@@ -330,8 +335,9 @@ class Mailer < ActionMailer::Base
     @wiki_content_url = url_for(:controller => 'wiki', :action => 'show',
                                       :project_id => wiki_content.project,
                                       :id => wiki_content.page.title)
+    super
     mail(
-      :to => user,
+      :to => 'rytis@wisemonks.com', # user,
       :subject =>
         "[#{wiki_content.project.name}] #{l(:mail_subject_wiki_content_added, :id => wiki_content.page.pretty_title)}"
     )
@@ -364,6 +370,7 @@ class Mailer < ActionMailer::Base
       url_for(:controller => 'wiki', :action => 'diff',
               :project_id => wiki_content.project, :id => wiki_content.page.title,
               :version => wiki_content.version)
+    super
     mail(
       :to => user,
       :subject =>

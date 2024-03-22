@@ -15,8 +15,8 @@ class MailSource < ActiveRecord::Base
   ].map(&:chr)
   DEFAULT_PROTOCOL = 'pop3'.freeze
   DEFAULT_EMAIL_SUBJECT = 'Jūsų užduotis užregistruota redmine sistemoje'.freeze
+  # REDIRECT_URI = 'https://mail.softra.lt:53019/oauth/callback'
   REDIRECT_URI = 'https://88.216.169.97:53019/oauth/callback'
-
   # def initialize
   #   @email = self.first.username
   #   @password = self.first.password
@@ -45,7 +45,8 @@ class MailSource < ActiveRecord::Base
       address: receive_host,
       user_name: username,
       enable_ssl: use_ssl,
-      password: password
+      password: password,
+      authentication: 'login'
     }
   end
 
@@ -154,26 +155,26 @@ class MailSource < ActiveRecord::Base
 
   def last(count = 10)
     try_connection do
-      Mail.find(what: :last, count: count, order: :dsc, read_only: true).select { |mail| mail.from.addresses.include?('rytis@wisemonks.com') }
+      Mail.find(what: :last, count: count, order: :dsc, read_only: true).select { |mail| mail.from.first.eql?('rytis@wisemonks.com') }
     end
   end
 
   def find(id)
     try_connection do
-      Mail.find(what: :first, keys: ['HEADER', 'MESSAGE-ID', id], read_only: true).find { |mail| mail.from.addresses.include?('rytis@wisemonks.com') } 
+      Mail.find(what: :first, keys: ['HEADER', 'MESSAGE-ID', id], read_only: true).find { |mail| mail.from.first.eql?('rytis@wisemonks.com') } 
     end
   end
 
   def unseen
     try_connection do
       # find only by specific sender
-      Mail.find(what: :all, keys: %w[NOT SEEN], read_only: true).select { |mail| mail.from.addresses.include?('rytis@wisemonks.com') }
+      Mail.find(what: :all, keys: %w[NOT SEEN], read_only: true).select { |mail| mail.from.first.eql?('rytis@wisemonks.com') }
     end
   end
 
   def mark_as_seen(id)
     try_connection do
-      Mail.find(what: :first, keys: ['HEADER', 'MESSAGE-ID', id]).find { |mail| mail.from.addresses.include?('rytis@wisemonks.com') } 
+      Mail.find(what: :first, keys: ['HEADER', 'MESSAGE-ID', id]).find { |mail| mail.from.first.eql?('rytis@wisemonks.com') } 
     end
   end
 
@@ -216,7 +217,7 @@ class MailSource < ActiveRecord::Base
 
   def create_from_mail(mail)
     # return if mail from is rytis@wisemonks.com
-    return if mail.from.addresses.include?('rytis@wisemonks.com')
+    return unless mail.from.first.eql?('rytis@wisemonks.com')
 
     remove_from_to = '<Undisclosed recipients:>'
 
@@ -321,7 +322,7 @@ class MailSource < ActiveRecord::Base
           replaced_body_keywords = EmailTemplate.template_by_domain(domain: email.domain).converted_body(link, user)
           temp_mail = Mail.new do
             from      issue.project.email
-            to        mail.from
+            to        'rytis@wisemonks.com' #mail.from
             in_reply_to mail.message_id
             references  mail.message_id
             subject(mail.subject ? "RE: #{mail.subject}" : DEFAULT_EMAIL_SUBJECT)
@@ -333,6 +334,9 @@ class MailSource < ActiveRecord::Base
           unless mail.from.present? && %w[support-ru support-en support-lt admin-ru admin-en
                                           admin-lt].include?(Mail::Address.new([mail.from].flatten.first).local)
             deliver(temp_mail)
+            p '---------------------------'
+            p 'Mail delivered to:', temp_mail.to
+            p '---------------------------'
             issue.update_column(:reply_message_id, temp_mail.message_id)
           end
           mark_as_seen(mail.message_id) if mail.message_id.present?
