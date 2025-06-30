@@ -15,8 +15,8 @@ end
 set :environment, 'production'
 # Log rotation configuration
 set :output, { 
-  :error => { :file => 'log/cron_error_log.log', :count => 0, :size => 50.megabytes },
-  :standard => { :file => 'log/cron_log.log', :count => 0, :size => 50.megabytes }
+  :error => { :file => 'log/cron_error_log.log', :count => 0, :size => 50 * 1024 * 1024 },
+  :standard => { :file => 'log/cron_log.log', :count => 0, :size => 50 * 1024 * 1024 }
 }
 
 every 5.minutes do
