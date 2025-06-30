@@ -13,11 +13,7 @@ if defined? :rbenv_root
 end
 
 set :environment, 'production'
-# Log rotation configuration
-set :output, { 
-  :error => { :file => 'log/cron_error_log.log', :count => 0, :size => 50 * 1024 * 1024 },
-  :standard => { :file => 'log/cron_log.log', :count => 0, :size => 50 * 1024 * 1024 }
-}
+set :output, { :error => 'log/cron_error_log.log', :standard => 'log/cron_log.log' }
 
 every 5.minutes do
   runner "MailSource.each_mail_source_fetch_mails"
@@ -33,3 +29,4 @@ end
 # end
 
 # Learn more: http://github.com/javan/whenever
+
