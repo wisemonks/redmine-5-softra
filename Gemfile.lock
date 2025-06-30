@@ -121,7 +121,7 @@ GEM
     css_parser (1.17.1)
       addressable
     csv (3.2.9)
-    date (3.3.4)
+    date (3.4.1)
     deckar01-task_list (2.3.2)
       html-pipeline
     docile (1.4.0)
