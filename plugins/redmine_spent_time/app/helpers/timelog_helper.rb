@@ -165,6 +165,12 @@ module TimelogHelper
     collection
   end
 
+  def prior_friday(date)
+    days_to_subtract = (date.cwday + 2) % 7
+    days_to_subtract = 7 if days_to_subtract.zero?
+    date - days_to_subtract
+  end
+
   def minimum_time(current_user)
     return nil unless Setting.allow_logging_time.eql?('1') || !current_user.admin
 
