@@ -12,8 +12,9 @@ class IssueCollisionsController < ApplicationController
     date_of_due = params['due_date'] if params['due_date'].present?
     due_date = date_of_due.to_date rescue nil
     # assigned_to_id, start_date, due_date
-    last_start = Issue.where(assigned_to_id: assigned_to_id).order('start_date DESC').first.try(:start_date)
-    last_due_date = Issue.where(assigned_to_id: assigned_to_id).order('due_date DESC').first.try(:due_date)
+    last_start = Issue.where(assigned_to_id: assigned_to_id).where.not(start_date: nil).order('start_date DESC').first.try(:start_date)
+    last_due_date = Issue.where(assigned_to_id: assigned_to_id).where.not(due_date: nil).order('due_date DESC').first.try(:due_date)
+
 
     if last_start.present? && last_due_date.present?
       last_day = (last_start > last_due_date) ? last_start : last_due_date

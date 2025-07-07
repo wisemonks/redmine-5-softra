@@ -1,6 +1,5 @@
 $(document).ready(function(){
-
-  $('input[value="Submit"], input[value="Create"], input[value="Create and continue"], #save-event').click(function(e, params){
+  $('input[type="submit"], #save-event').click(function(e, params){
     var event = e.originalEvent;
     var assigned_to_id = $('#issue_assigned_to_id').val();
     var start_date = $('#issue_start_date').val();
