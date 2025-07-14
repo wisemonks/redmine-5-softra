@@ -25,10 +25,12 @@
 
       <% unless @author_id %>
         <span class="tile-author">        
-	  <%= link_to article.author.name, { :controller => 'articles', 
-          :action => 'authored', 
-          :author_id => article.author.id, 
-          :project_id => @project} %> 
+        <% if article&.author %>
+          <%= link_to article&.author&.name, { :controller => 'articles', 
+            :action => 'authored', 
+            :author_id => article&.author&.id, 
+            :project_id => @project} %> 
+        <% end %>
 	</span>
       <% end %>
 
