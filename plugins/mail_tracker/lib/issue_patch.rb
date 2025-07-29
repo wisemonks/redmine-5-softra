@@ -6,6 +6,8 @@ module IssuePatch
 
     # validates :message_id, uniqueness: true, if: message_id.present?
     after_create :assign_watchers
+    after_save :add_assignee_as_watcher
+
 
     validates :message_id, uniqueness: true, if: -> { message_id.present? }
     scope :visible, lambda {|*args|
@@ -32,6 +34,14 @@ module IssuePatch
 
     def rent
       project.rent_enabled && project.rent_start.present? && project.rent_month.present? && (project.rent_start <= Time.now) && ((project.rent_start + project.rent_month.to_i.month) >= Time.now)
+    end
+
+    # Automatically adds the assignee as a watcher when assigned
+    def add_assignee_as_watcher
+      if assigned_to.present? && assigned_to.is_a?(User) && assigned_to.active? && 
+         self.watcher_user_ids.exclude?(assigned_to.id)
+        self.set_watcher(assigned_to, true)
+      end
     end
 
     def assign_watchers
