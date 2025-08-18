@@ -18,6 +18,9 @@ Redmine::Plugin.register :redmine_spent_time do
        :spent_time,
        {:controller => 'spent_time', :action => 'index'},
        :caption => :spent_time_title,
-       :if => Proc.new{ User.current.allowed_to?(:view_spent_time, nil, :global => true)})
+       :if => Proc.new{ User.current.allowed_to?(:view_spent_time, nil, :global => true)}) 
 end
 
+Proc.new do
+  TimeEntry.send(:include, TimeEntryPatch)
+end.call
