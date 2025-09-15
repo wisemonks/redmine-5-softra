@@ -3,6 +3,16 @@ module JournalPatch
     base.class_eval do
       after_create :reassign_from_customer_or_contractor
       
+      scope :visible, lambda {|*args|
+        user = args.shift || User.current
+        options = args.shift || {}
+
+        joins(:issue => :project).
+          joins("LEFT OUTER JOIN watchers wa ON wa.watchable_id = #{Issue.table_name}.id AND wa.watchable_type = 'Issue'").
+          where(Issue.visible_condition(user, options)).
+          where(Journal.visible_notes_condition(user, :skip_pre_condition => true))
+      }
+      
       def reassign_from_customer_or_contractor
         project_member = issue.project.members.find_by(user_id: issue.assigned_to_id)
         customer_or_contractor = project_member&.roles&.where('roles.name in (?)', %w[Customer Contractor])
