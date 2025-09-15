@@ -4,7 +4,7 @@ module TimeEntryPatch
     validate :spent_on_validation
 
     def spent_on_validation
-      if spent_on < minimum_time(User.current)
+      if if minimum_time(User.current) && spent_on < minimum_time(User.current)
         errors.add(:spent_on, :invalid)
       end
     end
