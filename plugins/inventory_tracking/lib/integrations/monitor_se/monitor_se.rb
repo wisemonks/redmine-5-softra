@@ -5,6 +5,9 @@ require_relative 'endpoints/physical_inventory_lists'
 require_relative 'endpoints/inventory_commands'
 require_relative 'endpoints/quantity_changes'
 
+require 'net/http'
+require 'uri'
+
 module Integrations
   module MonitorSe
     class MonitorSe
@@ -26,12 +29,16 @@ module Integrations
       end
 
       def authenticate
-        response = HTTParty.post(
-          login_url,
-          headers: headers,
-          body: login_body.to_json
-        )
+        uri = URI(login_url)
+        http = Net::HTTP.new(uri.host, uri.port)
+        http.use_ssl = true
+        http.verify_mode = OpenSSL::SSL::VERIFY_NONE
+        
+        request = Net::HTTP::Post.new(uri)
+        headers.each { |k, v| request[k] = v }
+        request.body = login_body.to_json
 
+        response = http.request(request)
         handle_authentication_response(response)
       end
 
@@ -92,7 +99,7 @@ module Integrations
       end
 
       def handle_api_response(response)
-        case response.code
+        case response.code.to_i
         when 200
           JSON.parse(response.body)
         when 401
@@ -110,23 +117,39 @@ module Integrations
         authenticate unless authenticated?
       end
 
+      def make_request(method, path, params = {})
+        uri = URI("#{@base_url}/#{@language_code}/#{@company_number}/api/v1" + path)
+        http = Net::HTTP.new(uri.host, uri.port)
+        http.use_ssl = true
+        http.verify_mode = OpenSSL::SSL::VERIFY_NONE
+
+        case method.downcase.to_sym
+        when :get
+          request = Net::HTTP::Get.new(uri)
+          uri.query = URI.encode_www_form(params) if params.any?
+        when :post
+          request = Net::HTTP::Post.new(uri)
+          request.body = params.to_json
+        end
+
+        headers(include_session: true).each { |k, v| request[k] = v }
+        http.request(request)
+      end
+
       def build_query_params(filters, expand)
-        params = []
+        params = {}
         
         if filters.any?
           filter_conditions = filters.map do |key, value|
-            if value.is_a?(String)
-              "#{key} eq '#{value}'"
-            else
-              "#{key} eq #{value}"
-            end
+            value_str = value.is_a?(String) ? "'#{value}'" : value
+            "#{key} eq #{value_str}"
           end
-          params << "$filter=#{filter_conditions.join(' and ')}"
+          params['$filter'] = filter_conditions.join(' and ')
         end
         
-        params << "$expand=#{expand.join(',')}" if expand.any?
+        params['$expand'] = expand.join(',') if expand.any?
         
-        params.any? ? "?#{params.join('&')}" : ''
+        params
       end
     end
   end
