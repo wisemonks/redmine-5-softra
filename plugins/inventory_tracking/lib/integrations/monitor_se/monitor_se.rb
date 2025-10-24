@@ -19,7 +19,7 @@ module Integrations
       def initialize(language_code: 'lt', company_number: '001.1')
         @base_url = Rails.application.secrets[:MONITOR_SE_URL]
         @username = Rails.application.secrets[:MONITOR_SE_USER_NAME]
-        @password = Rails.application.secrets[:MONITOR_SE_USER_PWD]
+        @password = Rails.application.secrets[:MONITOR_SE_USER_PASSWORD]
         @language_code = language_code
         @company_number = company_number
         @session_id = nil
