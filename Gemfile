@@ -18,6 +18,10 @@ gem 'rubyzip', '~> 2.3.0'
 
 #  Ruby Standard Gems
 gem 'csv', '~> 3.2.6'
+
+group :development, :test do
+  gem 'dotenv-rails'
+end
 gem 'net-imap', '~> 0.3.4'
 gem 'net-pop', '~> 0.1.2'
 gem 'net-smtp', '~> 0.3.3'
