@@ -17,9 +17,9 @@ module Integrations
       attr_reader :session_id, :base_url, :language_code, :company_number
 
       def initialize(language_code: 'lt', company_number: '001.1')
-        @base_url = ENV['MONITOR_SE_URL']
-        @username = ENV['MONITOR_SE_USER_NAME']
-        @password = ENV['MONITOR_SE_USER_PWD']
+        @base_url = Rails.application.secrets[:MONITOR_SE_URL]
+        @username = Rails.application.secrets[:MONITOR_SE_USER_NAME]
+        @password = Rails.application.secrets[:MONITOR_SE_USER_PWD]
         @language_code = language_code
         @company_number = company_number
         @session_id = nil
