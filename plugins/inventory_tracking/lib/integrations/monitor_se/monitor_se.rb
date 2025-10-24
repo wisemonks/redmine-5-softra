@@ -1,6 +1,6 @@
 require 'httparty'
 require_relative 'endpoints/parts'
-require_relative 'endpoints/balance'
+require_relative 'endpoints/stock_balance_changes'
 require_relative 'endpoints/physical_inventory_lists'
 require_relative 'endpoints/inventory_commands'
 require_relative 'endpoints/quantity_changes'
