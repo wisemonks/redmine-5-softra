@@ -137,19 +137,19 @@ module Integrations
       end
 
       def build_query_params(filters, expand)
-        params = {}
+        params = []
         
         if filters.any?
           filter_conditions = filters.map do |key, value|
             value_str = value.is_a?(String) ? "'#{value}'" : value
             "#{key} eq #{value_str}"
           end
-          params['$filter'] = filter_conditions.join(' and ')
+          params << "$filter=#{URI.encode_www_form_component(filter_conditions.join(' and '))}"
         end
         
-        params['$expand'] = expand.join(',') if expand.any?
+        params << "$expand=#{expand.join(',')}" if expand.any?
         
-        params
+        params.any? ? "?#{params.join('&')}" : ''
       end
     end
   end
