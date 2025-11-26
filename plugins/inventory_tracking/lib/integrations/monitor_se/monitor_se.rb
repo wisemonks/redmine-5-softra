@@ -78,16 +78,16 @@ module Integrations
         {
           'Username' => @username,
           'Password' => @password,
-          'ForceRelogin' => false
+          'ForceRelogin' => true
         }
       end
 
       def handle_authentication_response(response)
-        pp response
         if response.code.to_i == 200
-          body = JSON.parse(response.body)
-          @session_id = body['SessionId']
+          # Session ID is in the header, not the body
+          @session_id = response['X-Monitor-SessionId']
           
+          body = JSON.parse(response.body)
           mfa_token = body['MfaToken']
           
           if mfa_token.present?
