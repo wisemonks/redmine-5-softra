@@ -11,9 +11,9 @@ module Integrations
       default_timeout 30
 
       def initialize
-        @username = ENV['finvalda_user_name']
-        @password = ENV['finvalda_user_pwd']
-        @conn_string = ENV['finvalda_production_company_id']
+        @username = Rails.application.secrets[:FINVALDA_USER_NAME]
+        @password = Rails.application.secrets[:FINVALDA_PASSWORD]
+        @conn_string = Rails.application.secrets[:FINVALDA_COMPANY_ID]
       end
 
       def headers

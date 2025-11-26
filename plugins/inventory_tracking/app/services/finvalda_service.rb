@@ -1,6 +1,6 @@
 class FinvaldaService
   def initialize
-    @client = Integrations::Finvalda.new
+    @client = Integrations::Finvalda::Finvalda.new
   end
 
   def authenticate

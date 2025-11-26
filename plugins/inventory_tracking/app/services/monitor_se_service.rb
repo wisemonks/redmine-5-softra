@@ -1,6 +1,6 @@
 class MonitorSeService
   def initialize
-    @client = Integrations::MonitorSe.new
+    @client = Integrations::MonitorSe::MonitorSe.new
   end
 
   def sync_parts

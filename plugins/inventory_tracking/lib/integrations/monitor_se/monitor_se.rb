@@ -79,8 +79,8 @@ module Integrations
       end
 
       def handle_authentication_response(response)
-        if response.code == 200
-          @session_id = response.headers['X-Monitor-SessionId']
+        if response.code.to_i == 200
+          @session_id = response['X-Monitor-SessionId']
           
           body = JSON.parse(response.body)
           mfa_token = body['MfaToken']
@@ -90,7 +90,7 @@ module Integrations
           end
           
           @session_id
-        elsif response.code == 403
+        elsif response.code.to_i == 403
           error_message = JSON.parse(response.body)
           raise "Authentication failed: #{error_message}"
         else
