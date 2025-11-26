@@ -11,11 +11,15 @@ require 'uri'
 module Integrations
   module MonitorSe
     class MonitorSe
+      include HTTParty
       include Integrations::MonitorSe::Endpoints::Parts
       include Integrations::MonitorSe::Endpoints::StockBalanceChanges
       include Integrations::MonitorSe::Endpoints::PhysicalInventoryLists
       include Integrations::MonitorSe::Endpoints::InventoryCommands
       include Integrations::MonitorSe::Endpoints::QuantityChanges
+      
+      # Disable SSL verification for self-signed certificates
+      default_options.update(verify: false)
       
       attr_reader :session_id, :base_url, :language_code, :company_number
 

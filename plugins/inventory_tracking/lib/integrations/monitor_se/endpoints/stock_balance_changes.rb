@@ -8,7 +8,7 @@ module Integrations
           query_params = build_query_params(filters, expand)
           url = "#{api_base_url}/Inventory/StockBalanceChanges#{query_params}"
           
-          response = HTTParty.get(url, headers: headers(include_session: true))
+          response = self.class.get(url, headers: headers(include_session: true))
           handle_api_response(response)
         end
 
@@ -18,7 +18,7 @@ module Integrations
           query_params = expand.any? ? "?$expand=#{expand.join(',')}" : ''
           url = "#{api_base_url}/Inventory/StockBalanceChanges(#{stock_balance_change_id})#{query_params}"
           
-          response = HTTParty.get(url, headers: headers(include_session: true))
+          response = self.class.get(url, headers: headers(include_session: true))
           handle_api_response(response)
         end
 

@@ -21,7 +21,7 @@ module Integrations
           )
           
           url = "#{api_base_url}/Inventory/Parts/StockCount"
-          response = HTTParty.post(
+          response = self.class.post(
             url,
             headers: headers(include_session: true),
             body: body.to_json
@@ -44,7 +44,7 @@ module Integrations
           )
           
           url = "#{api_base_url}/Inventory/Parts/GetPartBalanceInfo"
-          response = HTTParty.post(
+          response = self.class.post(
             url,
             headers: headers(include_session: true),
             body: body.to_json
