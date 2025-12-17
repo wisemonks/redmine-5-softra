@@ -73,6 +73,9 @@ class MailTrackerJob < ApplicationJob
         log_string = "Taken message id: #{email.message_id}, From: #{email.from}, To: #{email.to}, Subject: #{email.subject}, Date: #{email.date}, Error message: #{e}, Trace: #{e.backtrace}"
         MailTrackerCustomLogger.logger.error(log_string)
         @mail_source.mark_as_seen(email.message_id)
+      elsif e.to_s.include?('Assignee is invalid')
+        log_string = "Invalid assignee message id: #{email.message_id}, From: #{email.from}, To: #{email.to}, Subject: #{email.subject}, Date: #{email.date}, Error message: #{e}, Issue params: #{@issue_params}, Trace: #{e.backtrace}"
+        MailTrackerCustomLogger.logger.error(log_string)
       else
         Sentry.capture_exception(e)
         log_string = "Error message id: #{email.message_id}, From: #{email.from}, To: #{email.to}, Subject: #{email.subject}, Date: #{email.date}, Error message: #{e}, Issue params: #{@issue_params}, Trace: #{e.backtrace}"
