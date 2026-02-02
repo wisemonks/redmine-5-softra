@@ -2,64 +2,57 @@ module ApplicationHelperPatch
   def self.included(base)
     base.class_eval do
 
-      # Split text into chunks based on blank lines and structural boundaries
+      # Detect format of a single line
+      def detect_line_format(line)
+        # Strong Markdown-only patterns
+        return 'common_mark' if line =~ /^```/                    # Code fence
+        return 'common_mark' if line =~ /^\!\[.*\]\(.*\)/         # Markdown image
+        return 'common_mark' if line =~ /^\#{1,6}\s+/             # Markdown heading
+        return 'common_mark' if line =~ /^\s*[-+]\s+/             # Markdown list (- or +)
+        
+        # Strong Textile-only patterns
+        return 'textile' if line =~ /^\s*h[1-6]\.\s/              # Textile heading
+        return 'textile' if line =~ /^![\w\/\.\-]+!/              # Textile image
+        return 'textile' if line =~ /^\s*bc\.\s/                  # Textile code block
+        return 'textile' if line =~ /%\{[^}]+\}/                  # Textile inline style
+        return 'textile' if line =~ /\{\{[^}]+\}\}/               # Textile macro
+        return 'textile' if line =~ /"[^"]+":(?:https?:\/\/|\/)/  # Textile link
+        
+        # Default to textile for ambiguous content
+        'textile'
+      end
+      
+      # Split text into chunks based on format changes
       def split_into_chunks(text)
         chunks = []
         current_chunk = []
-        in_code_block = false
-        in_table = false
-        code_fence_type = nil
+        current_format = nil
+        in_code_fence = false
         
         text.lines.each do |line|
-          # Track code blocks (both markdown and textile)
-          # Markdown fenced code blocks
+          # Track code fences
           if line =~ /^```/
-            if in_code_block && code_fence_type == :markdown
-              in_code_block = false
-              code_fence_type = nil
-            elsif !in_code_block
-              in_code_block = true
-              code_fence_type = :markdown
-            end
-          # HTML pre/code tags
-          elsif line =~ /<pre[^>]*>/ || line =~ /<code[^>]*>/
-            in_code_block = true
-            code_fence_type = :html
-          elsif line =~ /<\/pre>/ || line =~ /<\/code>/
-            in_code_block = false
-            code_fence_type = nil
-          # Textile code blocks
-          elsif line =~ /^\s*bc\.\s/
-            in_code_block = true
-            code_fence_type = :textile
-          elsif in_code_block && code_fence_type == :textile && line.strip.empty?
-            in_code_block = false
-            code_fence_type = nil
+            in_code_fence = !in_code_fence
           end
           
-          # Track tables (both markdown and HTML)
-          if line =~ /^\s*\|.*\|/ || line =~ /<table[^>]*>/
-            in_table = true
-          elsif line =~ /<\/table>/
-            in_table = false
-          elsif in_table && line.strip.empty? && line !~ /^\s*\|/
-            # End table on blank line without pipes
-            in_table = false
-          end
+          # Detect format of this line
+          line_format = detect_line_format(line)
           
-          # Split on blank lines, but keep code blocks and tables together
-          if line.strip.empty? && !in_code_block && !in_table && current_chunk.any?
-            chunks << current_chunk.join
-            current_chunk = []
+          # If format changes and we're not in a code fence, start new chunk
+          if current_format && line_format != current_format && !in_code_fence && line.strip != ''
+            chunks << current_chunk.join if current_chunk.any?
+            current_chunk = [line]
+            current_format = line_format
           else
             current_chunk << line
+            current_format ||= line_format
           end
         end
         
         # Add remaining chunk
         chunks << current_chunk.join if current_chunk.any?
         
-        chunks
+        chunks.reject { |c| c.strip.empty? }
       end
 
       # Detect format for a single chunk of text
@@ -68,25 +61,30 @@ module ApplicationHelperPatch
       
         # Strong Textile indicators (these are unique to Textile)
         textile_indicators = [
-          /^\s*h[1-6]\.\s/m,           # Headings like h1., h2., h3.
-          /"[^"]+":https?:\/\//,       # Links like "text":http://url
-          /!\S+!/,                     # Images like !url!
-          /^\s*\*\s+/m,                # Textile lists with *
-          /^\s*#\s+/m,                 # Textile numbered lists with #
-          /^\|[^\|]+\|/m,              # Tables with pipes
-          /@\w+@/,                     # Textile code spans @code@
-          /\*\*\w+\*\*/,               # Textile bold **text**
-          /__\w+__/,                   # Textile italic __text__
+          /^\s*h[1-6]\.\s/m,                    # Headings like h1., h2., h3.
+          /"[^"]+":(?:https?:\/\/|\/)/,         # Links like "text":http://url or "text":/path
+          /![\w\/\.\-]+!/,                      # Images like !url! (not ![...] which is Markdown)
+          /^\s*\*+\s+/m,                        # Textile lists with * or **
+          /^\s*#+\s+/m,                         # Textile numbered lists with #
+          /^\|[^\|]+\|/m,                       # Tables with pipes
+          /@[^@\s]+@/,                          # Textile code spans @code@
+          /\{\{[^}]+\}\}/m,                     # Textile macros {{macro(...)}}
+          /\*\*[^\*]+\*\*/,                     # Textile bold **text**
+          /__[^_]+__/,                          # Textile italic __text__
+          /^\s*bc\.\s/m,                        # Textile code blocks bc.
+          /attachment:/,                        # Redmine attachment syntax
+          /^\s*----+\s*$/m,                     # Horizontal rules (common in Textile)
+          /%\{[^}]+\}/,                         # Textile inline styles %{color:red}text%
         ]
         
         # Strong Markdown indicators (these are unique to Markdown)
         markdown_indicators = [
-          /^\#{1,6}\s+/m,              # Markdown headings # ## ###
-          /\!\[[^\]]*\]\([^\)]+\)/,    # Markdown images ![alt](url)
-          /\[[^\]]+\]\([^\)]+\)/,      # Markdown links [text](url)
-          /^```/m,                     # Markdown code fences
-          /^\s*[-*+]\s+/m,             # Markdown unordered lists
-          /^\s*\d+\.\s+/m,             # Markdown numbered lists
+          /^\#{1,6}\s+/m,                       # Markdown headings # ## ###
+          /\!\[[^\]]*\]\([^\)]+\)/,             # Markdown images ![alt](url)
+          /\[[^\]]+\]\([^\)]+\)/,               # Markdown links [text](url)
+          /^```/m,                              # Markdown code fences
+          /^\s*[-+]\s+/m,                       # Markdown unordered lists (- or +, but not *)
+          /^\s*\d+\.\s+/m,                      # Markdown numbered lists
         ]
         
         # Count strong indicators for each format
@@ -99,8 +97,8 @@ module ApplicationHelperPatch
         elsif markdown_score > textile_score
           'common_mark'
         else
-          # Default to common_mark if no clear winner
-          'common_mark'
+          # Default to textile for Redmine compatibility
+          'textile'
         end
       end
       
@@ -136,29 +134,45 @@ module ApplicationHelperPatch
         if options[:formatting] == false
           text = h(text)
         else
-          # Chunk-based formatting: split text and format each chunk independently
+          # Check if we have mixed format content
           chunks = split_into_chunks(text)
+          chunk_formats = chunks.map { |chunk| detect_chunk_format(chunk) }
+          has_mixed_formats = chunk_formats.uniq.size > 1
           
-          formatted_chunks = chunks.map do |chunk|
-            # Extract macros from this chunk
-            chunk_macros = catch_macros(chunk)
+          if has_mixed_formats && chunks.size > 1
+            # Mixed formats - render each chunk with its own format
+            formatted_chunks = chunks.map do |chunk|
+              # Extract macros from this chunk
+              chunk_macros = catch_macros(chunk)
+              
+              # Detect format for this specific chunk
+              chunk_format = detect_chunk_format(chunk)
+              
+              # Render the chunk with its detected format
+              rendered = Redmine::WikiFormatting.to_html(chunk_format, chunk, :object => obj, :attribute => attr)
+              
+              # Process macros within this chunk's rendered output
+              parse_non_pre_blocks(rendered, obj, chunk_macros, options) do |txt|
+                [:parse_inline_attachments, :parse_hires_images, :parse_wiki_links, :parse_redmine_links].each do |method_name|
+                  send method_name, txt, project, obj, attr, only_path, options
+                end
+              end
+            end
             
-            # Detect format for this specific chunk
-            chunk_format = detect_chunk_format(chunk)
+            # Join rendered HTML chunks directly (they already have proper HTML structure)
+            text = formatted_chunks.join
+          else
+            # Single format - render entire text at once to preserve structure
+            macros = catch_macros(text)
+            formatting = detect_chunk_format(text)
+            text = Redmine::WikiFormatting.to_html(formatting, text, :object => obj, :attribute => attr)
             
-            # Render the chunk with its detected format
-            rendered = render_chunk(chunk, chunk_format, obj, attr)
-            
-            # Process macros within this chunk's rendered output
-            parse_non_pre_blocks(rendered, obj, chunk_macros, options) do |txt|
+            text = parse_non_pre_blocks(text, obj, macros, options) do |txt|
               [:parse_inline_attachments, :parse_hires_images, :parse_wiki_links, :parse_redmine_links].each do |method_name|
                 send method_name, txt, project, obj, attr, only_path, options
               end
             end
           end
-          
-          # Join chunks - preserve original spacing
-          text = formatted_chunks.join("\n\n")
         end
 
         @parsed_headings = []
