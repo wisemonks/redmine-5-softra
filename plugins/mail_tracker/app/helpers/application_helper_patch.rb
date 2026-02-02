@@ -2,104 +2,52 @@ module ApplicationHelperPatch
   def self.included(base)
     base.class_eval do
 
-      # Detect format of a single line
-      def detect_line_format(line)
-        # Strong Markdown-only patterns
-        return 'common_mark' if line =~ /^```/                    # Code fence
-        return 'common_mark' if line =~ /^\!\[.*\]\(.*\)/         # Markdown image
-        return 'common_mark' if line =~ /^\#{1,6}\s+/             # Markdown heading
-        return 'common_mark' if line =~ /^\s*[-+]\s+/             # Markdown list (- or +)
-        
-        # Strong Textile-only patterns
-        return 'textile' if line =~ /^\s*h[1-6]\.\s/              # Textile heading
-        return 'textile' if line =~ /^![\w\/\.\-]+!/              # Textile image
-        return 'textile' if line =~ /^\s*bc\.\s/                  # Textile code block
-        return 'textile' if line =~ /%\{[^}]+\}/                  # Textile inline style
-        return 'textile' if line =~ /\{\{[^}]+\}\}/               # Textile macro
-        return 'textile' if line =~ /"[^"]+":(?:https?:\/\/|\/)/  # Textile link
-        
-        # Default to textile for ambiguous content
-        'textile'
-      end
-      
-      # Split text into chunks based on format changes
+      # Split text into chunks on blank lines, but keep code blocks and macros together
       def split_into_chunks(text)
         chunks = []
         current_chunk = []
-        current_format = nil
         in_code_fence = false
+        in_macro = false
         
         text.lines.each do |line|
           # Track code fences
-          if line =~ /^```/
-            in_code_fence = !in_code_fence
-          end
+          in_code_fence = !in_code_fence if line =~ /^```/
           
-          # Detect format of this line
-          line_format = detect_line_format(line)
+          # Track macros
+          in_macro = true if line =~ /\{\{/
+          in_macro = false if line =~ /\}\}/
           
-          # If format changes and we're not in a code fence, start new chunk
-          if current_format && line_format != current_format && !in_code_fence && line.strip != ''
-            chunks << current_chunk.join if current_chunk.any?
-            current_chunk = [line]
-            current_format = line_format
+          # Split on blank lines only when not in code fence or macro
+          if line.strip.empty? && !in_code_fence && !in_macro && current_chunk.any?
+            chunks << current_chunk.join
+            current_chunk = []
           else
             current_chunk << line
-            current_format ||= line_format
           end
         end
         
-        # Add remaining chunk
         chunks << current_chunk.join if current_chunk.any?
-        
         chunks.reject { |c| c.strip.empty? }
       end
 
       # Detect format for a single chunk of text
       def detect_chunk_format(text)
-        # Regular expressions to match patterns specific to CommonMark (Markdown) and Textile
-      
-        # Strong Textile indicators (these are unique to Textile)
-        textile_indicators = [
-          /^\s*h[1-6]\.\s/m,                    # Headings like h1., h2., h3.
-          /"[^"]+":(?:https?:\/\/|\/)/,         # Links like "text":http://url or "text":/path
-          /![\w\/\.\-]+!/,                      # Images like !url! (not ![...] which is Markdown)
-          /^\s*\*+\s+/m,                        # Textile lists with * or **
-          /^\s*#+\s+/m,                         # Textile numbered lists with #
-          /^\|[^\|]+\|/m,                       # Tables with pipes
-          /@[^@\s]+@/,                          # Textile code spans @code@
-          /\{\{[^}]+\}\}/m,                     # Textile macros {{macro(...)}}
-          /\*\*[^\*]+\*\*/,                     # Textile bold **text**
-          /__[^_]+__/,                          # Textile italic __text__
-          /^\s*bc\.\s/m,                        # Textile code blocks bc.
-          /attachment:/,                        # Redmine attachment syntax
-          /^\s*----+\s*$/m,                     # Horizontal rules (common in Textile)
-          /%\{[^}]+\}/,                         # Textile inline styles %{color:red}text%
-        ]
+        # Check for strong Markdown-only indicators first
+        return 'common_mark' if text =~ /^```/m                      # Code fence
+        return 'common_mark' if text =~ /\!\[[^\]]*\]\([^\)]+\)/     # Markdown image ![](url)
+        return 'common_mark' if text =~ /^\#{1,6}\s+/m               # Markdown heading
         
-        # Strong Markdown indicators (these are unique to Markdown)
-        markdown_indicators = [
-          /^\#{1,6}\s+/m,                       # Markdown headings # ## ###
-          /\!\[[^\]]*\]\([^\)]+\)/,             # Markdown images ![alt](url)
-          /\[[^\]]+\]\([^\)]+\)/,               # Markdown links [text](url)
-          /^```/m,                              # Markdown code fences
-          /^\s*[-+]\s+/m,                       # Markdown unordered lists (- or +, but not *)
-          /^\s*\d+\.\s+/m,                      # Markdown numbered lists
-        ]
+        # Check for strong Textile-only indicators
+        return 'textile' if text =~ /^\s*h[1-6]\.\s/m                # Textile heading h1.
+        return 'textile' if text =~ /![\w\/\.\-]+!/                  # Textile image !url!
+        return 'textile' if text =~ /\{\{/                           # Textile macro
+        return 'textile' if text =~ /%\{[^}]+\}/                     # Textile inline style
+        return 'textile' if text =~ /"[^"]+":(?:https?:\/\/|\/)/     # Textile link
+        return 'textile' if text =~ /<pre[^>]*>/                     # HTML pre tag
+        return 'textile' if text =~ /^\s*bc\.\s/m                    # Textile code block
         
-        # Count strong indicators for each format
-        textile_score = textile_indicators.count { |pattern| text.match?(pattern) }
-        markdown_score = markdown_indicators.count { |pattern| text.match?(pattern) }
-        
-        # Decide based on scores
-        if textile_score > markdown_score
-          'textile'
-        elsif markdown_score > textile_score
-          'common_mark'
-        else
-          # Default to textile for Redmine compatibility
-          'textile'
-        end
+        # Default to textile for ambiguous content
+        'textile'
       end
       
       # Render a chunk with the appropriate formatter
