@@ -28,4 +28,5 @@ Proc.new do
   IssuesController.send(:include, IssuesControllerPatch)
   SettingsHelper.send(:include, SettingsHelperPatch)
   Setting.send(:include, SettingPatch)
+  Mailer.send(:include, MailerPatch)
 end.call
