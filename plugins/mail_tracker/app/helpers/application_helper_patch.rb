@@ -36,6 +36,16 @@ module ApplicationHelperPatch
         return 'common_mark' if text =~ /^```/m                      # Code fence
         return 'common_mark' if text =~ /\!\[[^\]]*\]\([^\)]+\)/     # Markdown image ![](url)
         return 'common_mark' if text =~ /^\#{1,6}\s+/m               # Markdown heading
+        # return 'common_mark' if text =~ /^\s*[\*\-\+]\s+/m           # Markdown unordered list
+        # return 'common_mark' if text =~ /^\s*\d+\.\s+/m              # Markdown ordered list
+        # return 'common_mark' if text =~ /\[[^\]]+\]\([^\)]+\)/       # Markdown link [text](url)
+        # return 'common_mark' if text =~ /\*\*[^\*]+\*\*/             # Markdown bold **text**
+        # return 'common_mark' if text =~ /__[^_]+__/                  # Markdown bold __text__
+        # return 'common_mark' if text =~ /(?<!\*)\*(?!\*)([^\*]+)\*(?!\*)/ # Markdown italic *text*
+        # return 'common_mark' if text =~ /(?<!_)_(?!_)([^_]+)_(?!_)/  # Markdown italic _text_
+        # return 'common_mark' if text =~ /^\s*>\s+/m                  # Markdown blockquote
+        # return 'common_mark' if text =~ /^\s*---\s*$/m               # Markdown horizontal rule
+        return 'common_mark' if text =~ /`[^`]+`/                    # Markdown inline code
         
         # Check for strong Textile-only indicators
         return 'textile' if text =~ /^\s*h[1-6]\.\s/m                # Textile heading h1.
