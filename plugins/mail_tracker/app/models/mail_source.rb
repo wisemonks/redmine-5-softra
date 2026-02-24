@@ -144,10 +144,21 @@ class MailSource < ActiveRecord::Base
     MailTrackerCustomLogger.logger.info("Using SMTP #{host}, PORT: #{delivery_port}, DOMAIN:#{domain}, USERNAME: #{username}")
     MailTrackerCustomLogger.logger.info("Delivering from #{mail.from} to #{mail.to}: #{mail.subject}")
 
+    retries = 0
+    max_retries = 3
     begin
       mail.deliver!
+    rescue EOFError, Net::SMTPError, Net::OpenTimeout, Net::ReadTimeout, IOError => e
+      retries += 1
+      if retries <= max_retries
+        MailTrackerCustomLogger.logger.warn("Delivering error (attempt #{retries}/#{max_retries}) - #{e}, retrying in #{retries * 5}s...")
+        sleep(retries * 5)
+        retry
+      end
+      MailTrackerCustomLogger.logger.error("Delivering error - #{e} after #{max_retries} attempts, Trace: #{e.backtrace}")
+      raise e
     rescue StandardError => e
-      MailTrackerCustomLogger.logger.error("Delivering error - #{e}")
+      MailTrackerCustomLogger.logger.error("Delivering error - #{e}, Trace: #{e.backtrace}")
       raise e
     end
   end
