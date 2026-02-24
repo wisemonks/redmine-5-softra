@@ -155,10 +155,10 @@ class MailSource < ActiveRecord::Base
         sleep(retries * 5)
         retry
       end
-      MailTrackerCustomLogger.logger.error("Delivering error - #{e} after #{max_retries} attempts")
+      MailTrackerCustomLogger.logger.error("Delivering error - #{e} after #{max_retries} attempts, Trace: #{e.backtrace}")
       raise e
     rescue StandardError => e
-      MailTrackerCustomLogger.logger.error("Delivering error - #{e}")
+      MailTrackerCustomLogger.logger.error("Delivering error - #{e}, Trace: #{e.backtrace}")
       raise e
     end
   end
