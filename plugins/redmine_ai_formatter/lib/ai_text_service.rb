@@ -1,66 +1,45 @@
 # frozen_string_literal: true
 
-require 'net/http'
-require 'uri'
-require 'json'
+require 'ruby_llm'
 
 class AiTextService
   class AiError < StandardError; end
 
-  def initialize
-  end
-
   def format_text(text, custom_prompt: nil)
     validate_settings!
+    configure_ruby_llm!
 
     prompt = custom_prompt.presence || default_prompt
-    api_url = Setting.ai_api_url.to_s.chomp('/')
-    endpoint = "#{api_url}/chat/completions"
+    temperature = (Setting.ai_temperature.presence || '0.1').to_f
 
-    body = {
-      model: Setting.ai_model,
-      messages: [
-        { role: 'system', content: prompt },
-        { role: 'user', content: text }
-      ],
-      temperature: (Setting.ai_temperature.presence || '0.1').to_f
-    }
+    chat = RubyLLM.chat(model: Setting.ai_model, provider: :openai, assume_model_exists: true)
+    chat.with_instructions(prompt)
+    chat.with_temperature(temperature)
 
-    uri = URI.parse(endpoint)
-    http = Net::HTTP.new(uri.host, uri.port)
-    http.use_ssl = (uri.scheme == 'https')
-    http.open_timeout = timeout_seconds
-    http.read_timeout = timeout_seconds
-
-    request = Net::HTTP::Post.new(uri.request_uri)
-    request['Content-Type'] = 'application/json'
-    request['Authorization'] = "Bearer #{Setting.ai_api_key}"
-    request.body = body.to_json
-
-    response = http.request(request)
-
-    unless response.is_a?(Net::HTTPSuccess)
-      error_body = begin
-        JSON.parse(response.body)
-      rescue
-        { 'error' => { 'message' => response.body } }
-      end
-      error_msg = error_body.dig('error', 'message') || response.body
-      raise AiError, "AI API error (#{response.code}): #{error_msg}"
-    end
-
-    result = JSON.parse(response.body)
-    content = result.dig('choices', 0, 'message', 'content')
-    raise AiError, "Unexpected AI API response format" unless content
+    response = chat.ask(text)
+    content = response.content
+    raise AiError, "Empty response from AI" if content.blank?
 
     content.strip
-  rescue Net::OpenTimeout, Net::ReadTimeout
+  rescue RubyLLM::Error => e
+    raise AiError, "AI API error: #{e.message}"
+  rescue Faraday::TimeoutError
     raise AiError, "AI API request timed out after #{timeout_seconds}s"
-  rescue Errno::ECONNREFUSED, SocketError => e
+  rescue Faraday::ConnectionFailed => e
     raise AiError, "Could not connect to AI API: #{e.message}"
   end
 
   private
+
+  def configure_ruby_llm!
+    api_url = Setting.ai_api_url.to_s.chomp('/')
+
+    RubyLLM.configure do |config|
+      config.openai_api_key = Setting.ai_api_key.to_s
+      config.openai_api_base = api_url
+      config.request_timeout = timeout_seconds
+    end
+  end
 
   def validate_settings!
     raise AiError, "AI API URL is not configured" if Setting.ai_api_url.blank?
@@ -74,6 +53,6 @@ class AiTextService
   end
 
   def timeout_seconds
-    (Setting.ai_request_timeout.presence || '30').to_i
+    (Setting.ai_request_timeout.presence || '120').to_i
   end
 end

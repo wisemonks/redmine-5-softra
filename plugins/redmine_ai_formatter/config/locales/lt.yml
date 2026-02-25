@@ -8,7 +8,8 @@ lt:
   setting_ai_temperature: "Temperatūra"
   setting_ai_request_timeout: "Užklausos laikas (sekundėmis)"
 
-  text_ai_api_url_hint: "Su OpenAI suderinamas API adresas, pvz. https://api.groq.com/openai/v1, https://api.openai.com/v1"
+  text_ai_api_url_hint: "Su OpenAI suderinamas API adresas, pvz. https://generativelanguage.googleapis.com/v1beta/openai/, https://api.openai.com/v1, https://api.groq.com/openai/v1"
+  text_ai_model_hint: "pvz. gemini-2.5-pro, gpt-4o, claude-sonnet-4-5, deepseek-chat"
   text_ai_default_prompt_hint: "Sisteminis prompt, siunčiamas AI formatuojant tekstą. Vartotojo tekstas siunčiamas kaip vartotojo žinutė."
   text_ai_temperature_hint: "Mažesnės reikšmės (0.0-0.3) duoda labiau nuspėjamą rezultatą. Diapazonas: 0.0 - 2.0"
   text_ai_request_timeout_hint: "Maksimalus laukimo laikas sekundėmis AI API atsakymui."
