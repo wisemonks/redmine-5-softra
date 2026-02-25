@@ -357,3 +357,17 @@ warrant_default_pricing:
   default: ''
 non_warrant_default_pricing:
   default: ''
+
+# AI Text Formatter settings
+ai_api_url:
+  default: 'https://api.groq.com/openai/v1'
+ai_api_key:
+  default: ''
+ai_model:
+  default: 'llama-3.3-70b-versatile'
+ai_default_prompt:
+  default: 'You are a text formatting assistant. Convert the following text to proper CommonMark Markdown. Fix any formatting issues, preserve the original meaning and content. Return ONLY the formatted text, no explanations.'
+ai_temperature:
+  default: '0.1'
+ai_request_timeout:
+  default: '30'

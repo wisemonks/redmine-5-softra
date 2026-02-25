@@ -1,0 +1,14 @@
+# Lithuanian strings
+lt:
+  label_ai_settings: "AI"
+  setting_ai_api_url: "AI API adresas"
+  setting_ai_api_key: "AI API raktas"
+  setting_ai_model: "AI modelis"
+  setting_ai_default_prompt: "Standartinis AI prompt tekstas"
+  setting_ai_temperature: "Temperatūra"
+  setting_ai_request_timeout: "Užklausos laikas (sekundėmis)"
+
+  text_ai_api_url_hint: "Su OpenAI suderinamas API adresas, pvz. https://api.groq.com/openai/v1, https://api.openai.com/v1"
+  text_ai_default_prompt_hint: "Sisteminis prompt, siunčiamas AI formatuojant tekstą. Vartotojo tekstas siunčiamas kaip vartotojo žinutė."
+  text_ai_temperature_hint: "Mažesnės reikšmės (0.0-0.3) duoda labiau nuspėjamą rezultatą. Diapazonas: 0.0 - 2.0"
+  text_ai_request_timeout_hint: "Maksimalus laukimo laikas sekundėmis AI API atsakymui."

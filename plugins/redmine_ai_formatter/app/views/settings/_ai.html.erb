@@ -1,0 +1,36 @@
+<%= form_tag({:action => 'edit', :tab => 'ai'}) do %>
+
+<div class="box tabular settings">
+  <p>
+    <%= setting_text_field :ai_api_url, :size => 60 %>
+    <em class="info"><%= l(:text_ai_api_url_hint) %></em>
+  </p>
+
+  <p>
+    <label for="settings_ai_api_key"><%= l(:setting_ai_api_key) %></label>
+    <input type="password" name="settings[ai_api_key]" id="settings_ai_api_key"
+           value="<%= Setting.ai_api_key %>" size="60" autocomplete="off">
+  </p>
+
+  <p>
+    <%= setting_text_field :ai_model, :size => 40 %>
+  </p>
+
+  <p>
+    <%= setting_text_area :ai_default_prompt, :cols => 80, :rows => 5 %>
+    <em class="info"><%= l(:text_ai_default_prompt_hint) %></em>
+  </p>
+
+  <p>
+    <%= setting_text_field :ai_temperature, :size => 5 %>
+    <em class="info"><%= l(:text_ai_temperature_hint) %></em>
+  </p>
+
+  <p>
+    <%= setting_text_field :ai_request_timeout, :size => 5 %>
+    <em class="info"><%= l(:text_ai_request_timeout_hint) %></em>
+  </p>
+</div>
+
+<%= submit_tag l(:button_save) %>
+<% end %>
