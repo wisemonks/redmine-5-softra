@@ -130,7 +130,9 @@ class MailSource < ActiveRecord::Base
       address: host,
       port: delivery_port || 587,
       domain: domain,
-      openssl_verify_mode: OpenSSL::SSL::VERIFY_NONE
+      openssl_verify_mode: OpenSSL::SSL::VERIFY_NONE,
+      open_timeout: 30,
+      read_timeout: 30,
       # openssl_verify_mode: 'none'
     }
     extras = oauth_enabled ?
