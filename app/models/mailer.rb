@@ -154,6 +154,7 @@ class Mailer < ActionMailer::Base
       :cc => @user,
       :subject => s
   end
+
   # Notifies users about an issue update.
   #
   # Example:
@@ -783,7 +784,9 @@ class Mailer < ActionMailer::Base
       if ActionMailer::Base.raise_delivery_errors
         raise e
       else
-        Rails.logger.error "Email delivery error: #{e.message}"
+        Rails.logger.error "Email delivery error message: #{e.message}"
+        Rails.logger.error "Email delivery error backtrace: #{e.backtrace}"
+        Rails.logger.error "Email delivery error subject: #{mail.subject}"
       end
     end
   end
