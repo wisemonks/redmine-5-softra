@@ -130,7 +130,8 @@ class MailSource < ActiveRecord::Base
       address: host,
       port: delivery_port || 587,
       domain: domain,
-      openssl_verify_mode: 'none'
+      openssl_verify_mode: OpenSSL::SSL::VERIFY_NONE
+      # openssl_verify_mode: 'none'
     }
     extras = oauth_enabled ?
       { authentication: 'XOAUTH2', user_name: email_address, password: access_token } :
@@ -139,6 +140,7 @@ class MailSource < ActiveRecord::Base
   end
 
   def deliver(mail)
+    token_refresher if oauth_enabled && refresh_token
     mail.delivery_method :smtp, delivery_options
 
     MailTrackerCustomLogger.logger.info("Using SMTP #{host}, PORT: #{delivery_port}, DOMAIN:#{domain}, USERNAME: #{username}")
@@ -153,6 +155,10 @@ class MailSource < ActiveRecord::Base
       if retries <= max_retries
         MailTrackerCustomLogger.logger.warn("Delivering error (attempt #{retries}/#{max_retries}) - #{e}, retrying in #{retries * 5}s...")
         sleep(retries * 5)
+        
+        token_refresher if oauth_enabled && refresh_token
+        mail.delivery_method :smtp, delivery_options
+        
         retry
       end
       MailTrackerCustomLogger.logger.error("Delivering error - #{e} after #{max_retries} attempts, Trace: #{e.backtrace}")
