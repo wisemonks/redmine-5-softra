@@ -1,6 +1,8 @@
 module JournalPatch
   def self.included(base)
     base.class_eval do
+      alias_method :notified_watchers_without_child_filter, :notified_watchers
+
       after_create :reassign_from_customer_or_contractor
       
       scope :visible, lambda {|*args|
@@ -27,7 +29,7 @@ module JournalPatch
       end
 
       def notified_watchers
-        notified = super
+        notified = notified_watchers_without_child_filter
         
         # Check if this journal is about adding/removing a child issue
         child_detail = details.detect { |d| d.property == 'attr' && d.prop_key == 'child_id' }
