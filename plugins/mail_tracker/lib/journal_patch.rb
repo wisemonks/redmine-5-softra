@@ -25,6 +25,29 @@ module JournalPatch
         issue.assigned_to_id = recent_non_customer_edit
         issue.save
       end
+
+      def notified_watchers
+        notified = super
+        
+        # Check if this journal is about adding/removing a child issue
+        child_detail = details.detect { |d| d.property == 'attr' && d.prop_key == 'child_id' }
+        
+        if child_detail
+          # Get the child issue ID (from value if added, old_value if removed)
+          child_id = child_detail.value.presence || child_detail.old_value.presence
+          
+          if child_id
+            child_issue = Issue.find_by(id: child_id)
+            
+            # Filter out watchers who cannot view the child issue
+            if child_issue
+              notified.select! { |user| child_issue.visible?(user) }
+            end
+          end
+        end
+        
+        notified
+      end
     end
   end
 end
