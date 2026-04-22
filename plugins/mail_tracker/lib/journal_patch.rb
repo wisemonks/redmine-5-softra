@@ -2,6 +2,8 @@ module JournalPatch
   def self.included(base)
     base.class_eval do
       alias_method :notified_watchers_without_child_filter, :notified_watchers
+      alias_method :notified_users_without_child_filter, :notified_users
+      alias_method :notified_mentions_without_child_filter, :notified_mentions
 
       after_create :reassign_from_customer_or_contractor
       
@@ -30,7 +32,22 @@ module JournalPatch
 
       def notified_watchers
         notified = notified_watchers_without_child_filter
-        
+        filter_by_child_visibility(notified)
+      end
+
+      def notified_users
+        notified = notified_users_without_child_filter
+        filter_by_child_visibility(notified)
+      end
+
+      def notified_mentions
+        notified = notified_mentions_without_child_filter
+        filter_by_child_visibility(notified)
+      end
+
+      private
+
+      def filter_by_child_visibility(notified)
         # Check if this journal is about adding/removing a child issue
         child_detail = details.detect { |d| d.property == 'attr' && d.prop_key == 'child_id' }
         
@@ -41,7 +58,7 @@ module JournalPatch
           if child_id
             child_issue = Issue.find_by(id: child_id)
             
-            # Filter out watchers who cannot view the child issue
+            # Filter out users who cannot view the child issue
             if child_issue
               notified.select! { |user| child_issue.visible?(user) }
             end
