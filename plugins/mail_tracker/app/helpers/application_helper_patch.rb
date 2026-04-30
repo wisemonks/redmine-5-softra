@@ -2,67 +2,54 @@ module ApplicationHelperPatch
   def self.included(base)
     base.class_eval do
 
-      # Split text into chunks on blank lines, but keep code blocks and macros together
-      def split_into_chunks(text)
-        chunks = []
-        current_chunk = []
-        in_code_fence = false
-        in_macro = false
-        
-        text.lines.each do |line|
-          # Track code fences
-          in_code_fence = !in_code_fence if line =~ /^```/
-          
-          # Track macros
-          in_macro = true if line =~ /\{\{/
-          in_macro = false if line =~ /\}\}/
-          
-          # Split on blank lines only when not in code fence or macro
-          if line.strip.empty? && !in_code_fence && !in_macro && current_chunk.any?
-            chunks << current_chunk.join
-            current_chunk = []
-          else
-            current_chunk << line
-          end
-        end
-        
-        chunks << current_chunk.join if current_chunk.any?
-        chunks.reject { |c| c.strip.empty? }
-      end
-
-      # Detect format for a single chunk of text
-      def detect_chunk_format(text)
-        # Check for strong Markdown-only indicators first
-        return 'common_mark' if text =~ /^```/m                      # Code fence
-        return 'common_mark' if text =~ /\!\[[^\]]*\]\([^\)]+\)/     # Markdown image ![](url)
-        return 'common_mark' if text =~ /^\#{1,6}\s+/m               # Markdown heading
-        # return 'common_mark' if text =~ /^\s*[\*\-\+]\s+/m           # Markdown unordered list
-        # return 'common_mark' if text =~ /^\s*\d+\.\s+/m              # Markdown ordered list
-        # return 'common_mark' if text =~ /\[[^\]]+\]\([^\)]+\)/       # Markdown link [text](url)
-        return 'common_mark' if text =~ /\*\*[^\*]+\*\*/             # Markdown bold **text**
-        return 'common_mark' if text =~ /__[^_]+__/                  # Markdown bold __text__
-        # return 'common_mark' if text =~ /(?<!\*)\*(?!\*)([^\*]+)\*(?!\*)/ # Markdown italic *text*
-        return 'common_mark' if text =~ /(?<!_)_(?!_)([^_]+)_(?!_)/  # Markdown italic _text_
-        # return 'common_mark' if text =~ /^\s*>\s+/m                  # Markdown blockquote
-        # return 'common_mark' if text =~ /^\s*---\s*$/m               # Markdown horizontal rule
-        return 'common_mark' if text =~ /`[^`]+`/                    # Markdown inline code
-        
-        # Check for strong Textile-only indicators
-        return 'textile' if text =~ /^\s*h[1-6]\.\s/m                # Textile heading h1.
-        return 'textile' if text =~ /![\w\/\.\-]+!/                  # Textile image !url!
-        return 'textile' if text =~ /\{\{/                           # Textile macro
-        return 'textile' if text =~ /%\{[^}]+\}/                     # Textile inline style
-        return 'textile' if text =~ /"[^"]+":(?:https?:\/\/|\/)/     # Textile link
-        return 'textile' if text =~ /<pre[^>]*>/                     # HTML pre tag
-        return 'textile' if text =~ /^\s*bc\.\s/m                    # Textile code block
-        
-        # Default to textile for ambiguous content
-        'textile'
-      end
+      # Resolve whether the text given is 'textile' or 'markdown'. Fall back to 'markdown' if the text is not recognized.
+      def detect_format(text)
+        # Regular expressions to match patterns specific to CommonMark (Markdown) and Textile
       
-      # Render a chunk with the appropriate formatter
-      def render_chunk(chunk, formatting, obj, attr)
-        Redmine::WikiFormatting.to_html(formatting, chunk, :object => obj, :attribute => attr)
+        # Markdown patterns
+        markdown_patterns = [
+          # /^\#{1,6}\s/,  # Headings like #, ##, ###, etc.
+          /\[.*?\]\(.*?\)/, # Links like [text](url)
+          /\!\[.*?\]\(.*?\)/, # Images like ![alt text](url)
+          /<h\d>/,  # Headings like <h1>, <h2>, <h3>, etc.
+          /<strong>.*?<\/strong>/, # Bold text like <strong>bold</strong>
+          /<em>.*?<\/em>/,     # Italic text like <em>italic</em>
+          /<a.*?>.*?<\/a>/, # Links like <a href="url">text</a>
+          /<img.*?>/, # Images like <img src="url" alt="alt text">
+          /<table.*?>.*?<\/table>/, # Tables like <table>...</table>
+          /<ul>.*?<\/ul>/, # Unordered lists like <ul>...</ul>
+          /<ol>.*?<\/ol>/, # Ordered lists like <ol>...</ol>
+          /<li>.*?<\/li>/, # List items like <li>...</li>
+          /<code>.*?<\/code>/, # Code blocks like <code>...</code>
+          /<pre>.*?<\/pre>/, # Preformatted text like <pre>...</pre>
+          /<blockquote>.*?<\/blockquote>/, # Blockquotes like <blockquote>...</blockquote>
+          /<hr>/, # Horizontal rules like <hr>
+          /<br>/, # Line breaks like <br>
+          /<p>.*?<\/p>/, # Paragraphs like <p>...</p>
+          /<span.*?>.*?<\/span>/, # Spans like <span>...</span>
+          /<div.*?>.*?<\/div>/ # Divs like <div>...</div>
+        ]
+      
+        # Textile patterns
+        textile_patterns = [
+          /^\s*h\d\.\s/,  # Headings like h1., h2., h3., etc.
+          /".*?":http.*?/, # Links like "text":http://example.com
+          /!\[.*?\]:.*?|!\[.*?\]:.*?|!\[.*?\]!/, # images like !"alt text":http://example.com OR !image_url!
+          /\|.*?\|/, # Tables like |...|
+        ]
+
+        # Check for Markdown patterns
+        markdown_detected = markdown_patterns.any? { |pattern| m = text.match?(pattern); p pattern.to_s + ' ' + m.to_s; m }
+      
+        # Check for Textile patterns
+        textile_detected = textile_patterns.any? { |pattern| m = text.match?(pattern); p pattern.to_s + ' ' + m.to_s; m }
+        if markdown_detected && !textile_detected
+          'common_mark'
+        elsif textile_detected && !markdown_detected
+          'textile'
+        else
+          'common_mark'
+        end
       end
 
       # Formats text according to system settings.
@@ -88,49 +75,17 @@ module ApplicationHelperPatch
         @only_path = only_path = options.delete(:only_path) == false ? false : true
 
         text = text.dup
+        macros = catch_macros(text)
 
         if options[:formatting] == false
           text = h(text)
         else
-          # Check if we have mixed format content
-          chunks = split_into_chunks(text)
-          chunk_formats = chunks.map { |chunk| detect_chunk_format(chunk) }
-          has_mixed_formats = chunk_formats.uniq.size > 1
-          
-          if has_mixed_formats && chunks.size > 1
-            # Mixed formats - render each chunk with its own format
-            formatted_chunks = chunks.map do |chunk|
-              # Extract macros from this chunk
-              chunk_macros = catch_macros(chunk)
-              
-              # Detect format for this specific chunk
-              chunk_format = detect_chunk_format(chunk)
-              
-              # Render the chunk with its detected format
-              rendered = Redmine::WikiFormatting.to_html(chunk_format, chunk, :object => obj, :attribute => attr)
-              
-              # Process macros within this chunk's rendered output
-              parse_non_pre_blocks(rendered, obj, chunk_macros, options) do |txt|
-                [:parse_inline_attachments, :parse_hires_images, :parse_wiki_links, :parse_redmine_links].each do |method_name|
-                  send method_name, txt, project, obj, attr, only_path, options
-                end
-              end
-            end
-            
-            # Join rendered HTML chunks directly (they already have proper HTML structure)
-            text = formatted_chunks.join
-          else
-            # Single format - render entire text at once to preserve structure
-            macros = catch_macros(text)
-            formatting = detect_chunk_format(text)
-            text = Redmine::WikiFormatting.to_html(formatting, text, :object => obj, :attribute => attr)
-            
-            text = parse_non_pre_blocks(text, obj, macros, options) do |txt|
-              [:parse_inline_attachments, :parse_hires_images, :parse_wiki_links, :parse_redmine_links].each do |method_name|
-                send method_name, txt, project, obj, attr, only_path, options
-              end
-            end
-          end
+          # Old non dynamic text_formatting
+          # formatting = Setting.text_formatting
+          # formatting = 'textile'
+          # New dynamic text_formatting which resolves the text formatting from the given text
+          formatting = detect_format(text)
+          text = Redmine::WikiFormatting.to_html(formatting, text, :object => obj, :attribute => attr)
         end
 
         @parsed_headings = []
@@ -138,6 +93,11 @@ module ApplicationHelperPatch
         @current_section = 0 if options[:edit_section_links]
 
         parse_sections(text, project, obj, attr, only_path, options)
+        text = parse_non_pre_blocks(text, obj, macros, options) do |txt|
+          [:parse_inline_attachments, :parse_hires_images, :parse_wiki_links, :parse_redmine_links].each do |method_name|
+            send method_name, txt, project, obj, attr, only_path, options
+          end
+        end
         parse_headings(text, project, obj, attr, only_path, options)
 
         if @parsed_headings.any?

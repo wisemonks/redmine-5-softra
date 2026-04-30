@@ -1,0 +1,11 @@
+<%= stylesheet_link_tag 'ai_formatter.css', plugin: 'redmine_ai_formatter' %>
+<%= javascript_include_tag 'ai_formatter.js', plugin: 'redmine_ai_formatter' %>
+
+<script type="text/javascript">
+  window.aiFormatterSettings = {
+    formatUrl: '<%= url_for(controller: "ai_formatter", action: "format_text") %>',
+    defaultPrompt: <%= raw Setting.ai_default_prompt.to_s.to_json %>,
+    csrfToken: '<%= form_authenticity_token %>',
+    configured: <%= Setting.ai_api_key.present?.to_json %>
+  };
+</script>
