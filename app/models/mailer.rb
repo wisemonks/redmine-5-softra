@@ -177,7 +177,7 @@ class Mailer < ActionMailer::Base
     #   journal.notes? || journal.visible_details(user).any?
     # end
     users.each do |user|
-      issue_edit(user, journal).deliver_now
+      issue_edit(user, journal).deliver_later
     end
   end
 

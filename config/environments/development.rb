@@ -66,6 +66,9 @@ Rails.application.configure do
   config.action_mailer.delivery_method = :letter_opener
   config.action_mailer.perform_deliveries = true
 
+  # Use Sidekiq for ActiveJob
+  config.active_job.queue_adapter = :sidekiq
+
   # Print deprecation notices to stderr and the Rails logger.
   config.active_support.deprecation = [:stderr, :log]
 end

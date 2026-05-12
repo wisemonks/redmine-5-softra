@@ -93,6 +93,10 @@ Rails.application.configure do
 
   # No email in production log
   config.action_mailer.logger = nil
+
+  # Use Sidekiq for ActiveJob
+  config.active_job.queue_adapter = :sidekiq
+
   config.hosts << 'crm.softra.lt'
   config.hosts << 'crm-new.softra.lt'
   config.hosts.clear

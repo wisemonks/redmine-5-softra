@@ -47,6 +47,11 @@ gem "capistrano-db-tasks", '0.4', require: false
 gem "sentry-ruby"
 gem "sentry-rails"
 
+# Background job processing with rate limiting
+gem 'sidekiq', '~> 7.0'
+gem 'redis', '~> 5.0'
+gem 'connection_pool', '~> 2.4.1'
+
 # Optional gem for LDAP authentication
 group :ldap do
   gem 'net-ldap', '~> 0.17.0'

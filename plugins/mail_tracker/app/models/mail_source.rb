@@ -146,29 +146,10 @@ class MailSource < ActiveRecord::Base
     mail.delivery_method :smtp, delivery_options
 
     MailTrackerCustomLogger.logger.info("Using SMTP #{host}, PORT: #{delivery_port}, DOMAIN:#{domain}, USERNAME: #{username}")
-    MailTrackerCustomLogger.logger.info("Delivering from #{mail.from} to #{mail.to}: #{mail.subject}")
+    MailTrackerCustomLogger.logger.info("Queueing email from #{mail.from} to #{mail.to}: #{mail.subject}")
 
-    retries = 0
-    max_retries = 3
-    begin
-      mail.deliver!
-    rescue EOFError, Net::SMTPError, Net::OpenTimeout, Net::ReadTimeout, IOError => e
-      retries += 1
-      if retries <= max_retries
-        MailTrackerCustomLogger.logger.warn("Delivering error (attempt #{retries}/#{max_retries}) - #{e}, retrying in #{retries * 5}s...")
-        sleep(retries * 5)
-        
-        token_refresher if oauth_enabled && refresh_token
-        mail.delivery_method :smtp, delivery_options
-        
-        retry
-      end
-      MailTrackerCustomLogger.logger.error("Delivering error - #{e} after #{max_retries} attempts, Trace: #{e.backtrace}")
-      raise e
-    rescue StandardError => e
-      MailTrackerCustomLogger.logger.error("Delivering error - #{e}, Trace: #{e.backtrace}")
-      raise e
-    end
+    # Use async delivery with rate limiting instead of synchronous delivery
+    mail.deliver_later
   end
 
   def last(count = 10)
