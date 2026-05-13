@@ -3,7 +3,7 @@ require_relative '../test_helper'
 class MailSourcesTest < ActiveSupport::TestCase
   def test_deliver_uses_deliver_later
     # This test verifies that MailSource#deliver uses mail.deliver_later
-    # which will trigger RateLimitedMailDeliveryJob
+    # which will trigger DatabaseMailDeliveryJob
 
     skip 'MailSource requires database setup' unless MailSource.table_exists?
 
@@ -26,16 +26,16 @@ class MailSourcesTest < ActiveSupport::TestCase
     )
 
     # Verify that deliver_later is called on the mail object
-    # This ensures our RateLimitedMailDeliveryJob will be used
+    # This ensures our DatabaseMailDeliveryJob will be used
     test_mail.expects(:delivery_method).with(:smtp, anything)
     test_mail.expects(:deliver_later).once
 
     mail_source.deliver(test_mail)
   end
 
-  def test_rate_limited_job_is_configured
-    # Verify that ActionMailer is configured to use RateLimitedMailDeliveryJob
-    assert_equal RateLimitedMailDeliveryJob, ActionMailer::MailDeliveryJob.descendants.first,
-      'RateLimitedMailDeliveryJob should be the mail delivery job'
+  def test_database_mail_delivery_job_is_configured
+    # Verify that ActionMailer is configured to use DatabaseMailDeliveryJob
+    assert_equal DatabaseMailDeliveryJob, ActionMailer::Base.delivery_job,
+      'DatabaseMailDeliveryJob should be the mail delivery job'
   end
 end

@@ -30,12 +30,12 @@ Proc.new do
   Setting.send(:include, SettingPatch)
 end.call
 
-# Set the custom delivery job immediately
-ActionMailer::Base.delivery_job = RateLimitedMailDeliveryJob
+# Set the custom delivery job immediately (database-backed)
+ActionMailer::Base.delivery_job = DatabaseMailDeliveryJob
 puts "[MailTracker] Set delivery job to: #{ActionMailer::Base.delivery_job}"
 
 # Also set it on every code reload in development
 Rails.application.config.to_prepare do
-  ActionMailer::Base.delivery_job = RateLimitedMailDeliveryJob
+  ActionMailer::Base.delivery_job = DatabaseMailDeliveryJob
   puts "[MailTracker] Reloaded delivery job to: #{ActionMailer::Base.delivery_job}"
 end
