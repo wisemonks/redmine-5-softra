@@ -2,11 +2,11 @@ module JournalPatch
   def self.included(base)
     base.class_eval do
       alias_method :notified_watchers_without_child_filter, :notified_watchers
-      # alias_method :notified_users_without_child_filter, :notified_users
+      alias_method :notified_users_without_child_filter, :notified_users
       # alias_method :notified_mentions_without_child_filter, :notified_mentions
 
       after_create :reassign_from_customer_or_contractor
-      
+
       scope :visible, lambda {|*args|
         user = args.shift || User.current
         options = args.shift || {}
@@ -16,7 +16,7 @@ module JournalPatch
           where(Issue.visible_condition(user, options)).
           where(Journal.visible_notes_condition(user, :skip_pre_condition => true))
       }
-      
+
       def reassign_from_customer_or_contractor
         project_member = issue.project.members.find_by(user_id: issue.assigned_to_id)
         customer_or_contractor = project_member&.roles&.where('roles.name in (?)', %w[Customer Contractor])
@@ -32,39 +32,45 @@ module JournalPatch
 
       def notified_watchers
         notified = notified_watchers_without_child_filter
-      #   filter_by_child_visibility(notified)
-      # end
+        filter_by_child_visibility(notified)
+      end
 
-      # def notified_users
-      #   notified = notified_users_without_child_filter
-      #   filter_by_child_visibility(notified)
-      # end
+      def notified_users
+        notified = notified_users_without_child_filter
+        filter_by_child_visibility(notified)
+      end
 
       # def notified_mentions
       #   notified = notified_mentions_without_child_filter
       #   filter_by_child_visibility(notified)
       # end
 
-      # private
+      private
 
-      # def filter_by_child_visibility(notified)
-        # Check if this journal is about adding/removing a child issue
-        child_detail = details.detect { |d| d.property == 'attr' && d.prop_key == 'child_id' }
-        
+      def filter_by_child_visibility(notified)
+
+        # Check for both child_id changes AND relation additions
+        child_detail = details.detect { |d| (d.property == 'attr' && d.prop_key == 'child_id') ||
+                                            (d.property == 'relation' && d.prop_key == 'relates') }
+
         if child_detail
-          # Get the child issue ID (from value if added, old_value if removed)
-          child_id = child_detail.value.presence || child_detail.old_value.presence
-          
+          # Get the child issue ID from different sources
+          child_id = if child_detail.property == 'relation'
+                       child_detail.value.presence || child_detail.old_value.presence  # For relations (both additions and removals)
+                     else
+                       child_detail.value.presence || child_detail.old_value.presence  # For child_id
+                     end
+
           if child_id
             child_issue = Issue.find_by(id: child_id)
-            
+
             # Filter out users who cannot view the child issue
             if child_issue
               notified.select! { |user| child_issue.visible?(user) }
             end
           end
         end
-        
+
         notified
       end
     end
