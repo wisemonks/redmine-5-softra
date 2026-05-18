@@ -54,12 +54,8 @@ module JournalPatch
                                             (d.property == 'relation' && d.prop_key == 'relates') }
 
         if child_detail
-          # Get the child issue ID from different sources
-          child_id = if child_detail.property == 'relation'
-                       child_detail.value.presence || child_detail.old_value.presence  # For relations (both additions and removals)
-                     else
-                       child_detail.value.presence || child_detail.old_value.presence  # For child_id
-                     end
+          # Get the child issue ID (from value if added, old_value if removed)
+          child_id = child_detail.value.presence || child_detail.old_value.presence
 
           if child_id
             child_issue = Issue.find_by(id: child_id)
