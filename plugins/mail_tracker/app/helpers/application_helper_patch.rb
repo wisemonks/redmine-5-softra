@@ -35,7 +35,7 @@ module ApplicationHelperPatch
           /^\s*h\d\.\s/,  # Headings like h1., h2., h3., etc.
           /".*?":http.*?/, # Links like "text":http://example.com
           /!\[.*?\]:.*?|!\[.*?\]:.*?|!\[.*?\]!/, # images like !"alt text":http://example.com OR !image_url!
-          /\|.*?\|/, # Tables like |...|
+          /^\s*\|.*?\|\s*$/m, # Tables like |...| (pipes at start and end of line)
         ]
 
         # Check for Markdown patterns
