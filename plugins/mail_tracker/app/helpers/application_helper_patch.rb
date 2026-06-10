@@ -81,10 +81,10 @@ module ApplicationHelperPatch
           text = h(text)
         else
           # Old non dynamic text_formatting
-          # formatting = Setting.text_formatting
+          formatting = Setting.text_formatting
           # formatting = 'textile'
           # New dynamic text_formatting which resolves the text formatting from the given text
-          formatting = detect_format(text)
+          # formatting = detect_format(text)
           text = Redmine::WikiFormatting.to_html(formatting, text, :object => obj, :attribute => attr)
         end
 
