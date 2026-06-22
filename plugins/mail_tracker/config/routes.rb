@@ -25,5 +25,5 @@ scope '/projects/:project_id', :as => 'project' do
   end
 end
 
-resources :email_templates, only: [:create, :destroy]
+resources :email_templates, only: [:create, :update, :destroy]
 resources :mail_source_blacklists
