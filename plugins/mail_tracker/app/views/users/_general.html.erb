@@ -33,11 +33,19 @@
         <%= g.input :tracker_name, label: 'Tracker:' do %>
           <%= g.select :tracker_name, Tracker.all.map { |r| [r.name, r.id] }, {:include_blank => "--select--"},{ class: 'form-control'}%>
         <% end %>
-        <%= g.input :assigned_group_id, label: 'Assigned to:', required: true do %>
-          <%= g.select :assigned_group_id, Group.givable.pluck(:lastname, :id), {:include_blank => "--select--"},{ class: 'search-select'} %>
+        <%
+          assigned_project = rule.assigned_project_id.present? ? Project.find_by(id: rule.assigned_project_id) : nil
+          assignable_groups = assigned_project ? assigned_project.assignable_users.where(type: 'Group').to_a.map { |g| [g.lastname, g.id] } : []
+        %>
+        <%
+          assigned_group_label = raw("Assigned to: " + content_tag(:button, "+", type: "button", class: "btn btn-success btn-xs add_group_btn", title: "Add a group not currently assignable on this project", style: "margin-left:3px; padding:0 6px; line-height:16px;"))
+        %>
+        <%= g.input :assigned_group_id, label: assigned_group_label, required: true do %>
+          <%= g.select :assigned_group_id, assignable_groups, {:include_blank => "--select--"},{ class: 'search-select assigned_group_select'} %>
+          <%= hidden_field_tag "mail_tracking_rule[pending_role_id]", "", class: "pending_role_id_field" %>
         <% end %>
         <%= g.input :assigned_project_id, label: 'Project:', required: true do %>
-          <%= g.select :assigned_project_id, project_tree_options_for_select(Project.all.active, :selected => (rule.assigned_project_id.present? ? Project.find(rule.assigned_project_id) : [] )), {:include_blank => "--select--"},{class: 'search-select'}%>
+          <%= g.select :assigned_project_id, project_tree_options_for_select(Project.all.active, :selected => (rule.assigned_project_id.present? ? Project.find(rule.assigned_project_id) : [] )), {:include_blank => "--select--"},{class: 'search-select assigned_project_select'}%>
         <% end %>
         <%= g.input :priority, label: 'Priority:', required: true do %>
           <%= g.select :priority, ['Low', 'Medium', 'High'], {:include_blank => "--select--"},{ class: 'form-control'}%>
@@ -50,4 +58,27 @@
       <% end %>
     </fieldset>
   <% end %>
+</div>
+
+<div id="mail_tracker_group_modal" class="modal hidden" style="display:none;">
+  <h3 class="title">Add group to project</h3>
+  <p>
+    <label>Group:</label><br/>
+    <select id="modal_group_select" class="form-control">
+      <% Group.givable.order(:lastname).each do |group| %>
+        <option value="<%= group.id %>"><%= group.lastname %></option>
+      <% end %>
+    </select>
+  </p>
+  <p>
+    <label>Role to grant on this project:</label><br/>
+    <select id="modal_role_select" class="form-control">
+      <% Role.where(assignable: true).sorted.each do |role| %>
+        <option value="<%= role.id %>"><%= role.name %></option>
+      <% end %>
+    </select>
+  </p>
+  <p>
+    <button type="button" class="btn btn-success" id="modal_add_group_btn">Add</button>
+  </p>
 </div>

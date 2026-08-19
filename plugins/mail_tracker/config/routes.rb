@@ -16,6 +16,7 @@ end
 resources :mail_tracking_rules do
   collection do
     get 'add_rule'
+    get 'assignable_groups'
   end
 end
 
