@@ -16,6 +16,7 @@ end
 resources :mail_tracking_rules do
   collection do
     get 'add_rule'
+    get 'assignable_groups'
   end
 end
 
@@ -25,5 +26,5 @@ scope '/projects/:project_id', :as => 'project' do
   end
 end
 
-resources :email_templates, only: [:create, :destroy]
+resources :email_templates, only: [:create, :update, :destroy]
 resources :mail_source_blacklists
