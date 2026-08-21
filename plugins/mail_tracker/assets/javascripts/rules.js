@@ -9,19 +9,12 @@ $( document ).ready(function() {
   });
 
   $('#add_rule').on('click', function(){
-    var auth = $('meta[name=csrf-token]').attr('content');
-    var userId = $('#add_rule').data('user-id')
-    $.ajax({
-      method: 'get',
-      url: "/mail_tracking_rules/add_rule?&authenticity_token=" + auth,
-      data: {
-        obj: "realThing",
-        user_id: userId,
-      },
-      success: function(resp) {
-        location.reload();
-      }
-    })
+    var template = document.getElementById('new_rule_template');
+    var clone = document.importNode(template.content, true);
+    var $clone = $(clone);
+    $('.mail_tracker_rules').append($clone);
+    $('.mail_tracker_rules fieldset:last .search-select').select2();
+    $('.mail_tracker_rules fieldset:last .input-duration').durationPicker();
   });
 
   $(document).on('change', 'select.assigned_project_select', function(){
@@ -83,8 +76,7 @@ $( document ).ready(function() {
     hideModal(this);
   });
 
-  $('.delete_rule').on('click', function(e){
-    // var auth = $('meta[name=csrf-token]').attr('content');
+  $(document).on('click', '.delete_rule', function(e){
     var id = $(this).attr('data-id');
     if(confirm("Do you really want to delete this rule?")){
       if(id && id.length > 0){
@@ -99,6 +91,8 @@ $( document ).ready(function() {
             location.reload();
           }
         })
+      } else {
+        $(this).closest('fieldset').remove();
       }
     }
 

@@ -79,3 +79,13 @@
 .mail_tracking_rule_end_duration > .bdp-input > .bdp-block  > .input-sm {
   width: 70px !important;
 }
+
+.mail_tracker_rules .input.field_with_errors {
+  display: inline-block;
+}
+
+.mail_tracker_rules .input .error {
+  display: block;
+  color: #d9534f;
+  white-space: normal;
+}
