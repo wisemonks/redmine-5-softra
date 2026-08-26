@@ -10,13 +10,6 @@ class MailTrackingRulesController < ApplicationController
   end
 
 
-  def add_rule
-    empty = MailTrackingRule.new(login_name: params[:user_id])
-    empty.save!
-    # render :nothing => true, :status => 200, :content_type => 'text/html'
-    render :json => {id: empty.id}
-  end
-
   def assignable_groups
     project = Project.find_by(id: params[:project_id])
     groups = project ? project.assignable_users.where(type: 'Group').to_a.map { |g| [g.lastname, g.id] } : []
@@ -31,19 +24,33 @@ class MailTrackingRulesController < ApplicationController
   end
 
 
+  def create
+    declared_params = mail_tracking_rule_params
+    rule = MailTrackingRule.new(declared_params.merge(login_name: params[:user][:id]))
+    ensure_group_membership(declared_params[:assigned_project_id], declared_params[:assigned_group_id], params.dig(:mail_tracking_rule, :pending_role_id))
+    unless rule.save
+      session[:mail_tracking_rule_error] = { 'id' => 'new', 'values' => declared_params.to_h }
+    end
+    redirect_to edit_user_url(id: params[:user][:id])
+  end
+
   def update
-    declared_params = params.require(:mail_tracking_rule).permit(:mail_part, :includes, :tracker_name, :assigned_group_id, :assigned_project_id, :end_duration, :priority)
+    declared_params = mail_tracking_rule_params
     if params[:id].present?
       rule = MailTrackingRule.find(params[:id])
       ensure_group_membership(declared_params[:assigned_project_id], declared_params[:assigned_group_id], params.dig(:mail_tracking_rule, :pending_role_id))
       unless rule.update(declared_params)
-        flash[:error] = rule.errors.full_messages.join(', ')
+        session[:mail_tracking_rule_error] = { 'id' => rule.id.to_s, 'values' => declared_params.to_h }
       end
     end
     redirect_to edit_user_url(id: params[:user][:id])
   end
 
   private
+
+  def mail_tracking_rule_params
+    params.require(:mail_tracking_rule).permit(:mail_part, :includes, :tracker_name, :assigned_group_id, :assigned_project_id, :end_duration, :priority)
+  end
 
   def ensure_group_membership(project_id, group_id, role_id)
     return if project_id.blank? || group_id.blank? || role_id.blank?

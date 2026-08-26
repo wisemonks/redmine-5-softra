@@ -12,8 +12,16 @@ namespace :mail_tracker do
         project = Project.find_by(id: rule.assigned_project_id)
         group = Group.find_by(id: rule.assigned_group_id)
         
-        # Check if group is a member of project
-        if project && group
+        if project.nil? || group.nil?
+          csv << [
+            rule.id,
+            rule.login_name,
+            rule.assigned_group_id,
+            group&.lastname,
+            rule.assigned_project_id,
+            project&.name
+          ]
+        else
           member = Member.find_by(project_id: project.id, user_id: group.id)
           if member.nil?
             csv << [
