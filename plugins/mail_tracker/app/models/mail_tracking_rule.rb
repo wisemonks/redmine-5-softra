@@ -3,6 +3,19 @@ class MailTrackingRule < ActiveRecord::Base
   unloadable
 
   has_many :issues_mail_tracking_rules
+
+  MAIL_PARTS = %w[From Subject Body CC].freeze
+  PRIORITIES = %w[Low Medium High].freeze
+
+  validates :login_name, presence: true
+  validates :mail_part, presence: true, inclusion: { in: MAIL_PARTS }
+  validates :includes, presence: true
+  validates :tracker_name, presence: true
+  validates :assigned_group_id, presence: true
+  validates :assigned_project_id, presence: true
+  validates :priority, presence: true, inclusion: { in: PRIORITIES }
+  validates :end_duration, presence: true, numericality: { only_integer: true, greater_than: 0 }
+
   def self.build_attachments_from_mail mail, issue
     mail.attachments.to_a.map do |attachment|
       # validate if attachment is bigger than 1000 bytes

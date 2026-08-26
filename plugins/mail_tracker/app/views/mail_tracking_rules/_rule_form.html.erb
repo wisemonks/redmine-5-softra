@@ -1,0 +1,34 @@
+<fieldset class="box tabular">
+  <%= simple_form_for rule, :url => (rule.persisted? ? mail_tracking_rule_path(rule.id) : mail_tracking_rules_path), :method => (rule.persisted? ? :put : :post) do |g| %>
+    <%= hidden_field_tag 'user[id]', user_id %>
+    <%= g.input :mail_part, label: 'Mail part:', input_html: { class:"form-control" } do %>
+      <%= g.select :mail_part, MailTrackingRule::MAIL_PARTS, {:include_blank => "--select--"},{ class: 'form-control'}%>
+    <% end %>
+    <%= g.input :includes, label: 'Includes:', required: true, input_html: { class:"form-control simple_input_size" }%>
+    <%= g.input :tracker_name, label: 'Tracker:' do %>
+      <%= g.select :tracker_name, Tracker.all.map { |r| [r.name, r.id] }, {:include_blank => "--select--"},{ class: 'form-control'}%>
+    <% end %>
+    <%
+      assigned_project = rule.assigned_project_id.present? ? Project.find_by(id: rule.assigned_project_id) : nil
+      assignable_groups = assigned_project ? assigned_project.assignable_users.where(type: 'Group').to_a.map { |g| [g.lastname, g.id] } : []
+    %>
+    <%
+      assigned_group_label = raw("Assigned to: " + content_tag(:button, "+", type: "button", class: "btn btn-success btn-xs add_group_btn", title: "Add a group not currently assignable on this project", style: "margin-left:3px; padding:0 6px; line-height:16px;"))
+    %>
+    <%= g.input :assigned_project_id, label: 'Project:', required: true do %>
+      <%= g.select :assigned_project_id, project_tree_options_for_select(Project.all.active, :selected => (rule.assigned_project_id.present? ? Project.find(rule.assigned_project_id) : [] )), {:include_blank => "--select--"},{class: 'search-select assigned_project_select'}%>
+    <% end %>
+    <%= g.input :assigned_group_id, label: assigned_group_label, required: true do %>
+      <%= g.select :assigned_group_id, assignable_groups, {:include_blank => "--select--"},{ class: 'search-select assigned_group_select'} %>
+      <%= hidden_field_tag "mail_tracking_rule[pending_role_id]", "", class: "pending_role_id_field" %>
+    <% end %>
+    <%= g.input :priority, label: 'Priority:', required: true do %>
+      <%= g.select :priority, MailTrackingRule::PRIORITIES, {:include_blank => "--select--"},{ class: 'form-control'}%>
+    <% end %>
+    <%= g.input :end_duration, label: 'Duration:', required: true, input_html: { class:"form-control input-duration" } %>
+    <div class="rule_actions">
+      <%= g.submit "Save" ,class: "btn btn-success", style: "margin-left:10px; height: 32px;" %>
+      <%= g.button :button , "Delete", type: "button" ,class: "btn btn-danger delete_rule", style: "margin-left:10px; height: 32px;", data:{"id":rule.id}%>
+    </div>
+  <% end %>
+</fieldset>

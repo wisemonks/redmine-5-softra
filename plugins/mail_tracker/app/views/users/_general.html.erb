@@ -15,39 +15,61 @@
 
 <hr/>
 
-<% @rules = MailTrackingRule.where(login_name: @user.id).order(:created_at) %>
+<%
+  @rules = MailTrackingRule.where(login_name: @user.id).order(:created_at)
+  rule_error = session.delete(:mail_tracking_rule_error)
+  if rule_error.present?
+    if rule_error['id'] == 'new'
+      pending_new_rule = MailTrackingRule.new(login_name: @user.id)
+      pending_new_rule.assign_attributes(rule_error['values'])
+      pending_new_rule.valid?
+    else
+      failed_rule = @rules.detect { |r| r.id.to_s == rule_error['id'] }
+      if failed_rule
+        failed_rule.assign_attributes(rule_error['values'])
+        failed_rule.valid?
+      end
+    end
+  end
+%>
 <div class="mail_tracker_rules">
 <h3> 
   Mail tracker rules:
-  <button class="btn btn-info" style="margin-left:10px; height: 32px;" id="add_rule" data-user-id="<%= @user.id %>">+ Add rule</button>
+  <button class="btn btn-info" style="margin-left:10px; height: 32px;" id="add_rule">+ Add rule</button>
 </h3>
 
   <% @rules.each do |rule| %>
-    <fieldset class="box tabular">
-      <%= simple_form_for rule, :url => mail_tracking_rule_path(rule.id), :method => :put do |g| %>
-        <%= hidden_field(:user, :id) %>
-        <%= g.input :mail_part, label: 'Mail part:', input_html: { class:"form-control" } do %>
-          <%= g.select :mail_part, ["From","Subject","Body","CC"],{:include_blank => "--select--"},{ class: 'form-control'}%>
-        <% end %>
-        <%= g.input :includes, label: 'Includes:', required: true, input_html: { class:"form-control simple_input_size" }%>
-        <%= g.input :tracker_name, label: 'Tracker:' do %>
-          <%= g.select :tracker_name, Tracker.all.map { |r| [r.name, r.id] }, {:include_blank => "--select--"},{ class: 'form-control'}%>
-        <% end %>
-        <%= g.input :assigned_group_id, label: 'Assigned to:', required: true do %>
-          <%= g.select :assigned_group_id, Group.givable.pluck(:lastname, :id), {:include_blank => "--select--"},{ class: 'search-select'} %>
-        <% end %>
-        <%= g.input :assigned_project_id, label: 'Project:', required: true do %>
-          <%= g.select :assigned_project_id, project_tree_options_for_select(Project.all.active, :selected => (rule.assigned_project_id.present? ? Project.find(rule.assigned_project_id) : [] )), {:include_blank => "--select--"},{class: 'search-select'}%>
-        <% end %>
-        <%= g.input :priority, label: 'Priority:', required: true do %>
-          <%= g.select :priority, ['Low', 'Medium', 'High'], {:include_blank => "--select--"},{ class: 'form-control'}%>
-        <% end %>
-        <%= g.input :end_duration, label: 'Duration:', required: true, input_html: { class:"form-control input-duration" } %>
-        <div class="rule_actions">
-          <%= g.submit "Save" ,class: "btn btn-success", style: "margin-left:10px; height: 32px;" %>
-          <%= g.button :button , "Delete", type: "button" ,class: "btn btn-danger delete_rule", style: "margin-left:10px; height: 32px;", data:{"id":rule.id}%>
-        </div>
-      <% end %>
-    </fieldset>
+    <%= render partial: 'mail_tracking_rules/rule_form', locals: { rule: rule, user_id: @user.id } %>
   <% end %>
+
+  <% if pending_new_rule %>
+    <%= render partial: 'mail_tracking_rules/rule_form', locals: { rule: pending_new_rule, user_id: @user.id } %>
+  <% end %>
+</div>
+
+<template id="new_rule_template">
+  <%= render partial: 'mail_tracking_rules/rule_form', locals: { rule: MailTrackingRule.new, user_id: @user.id } %>
+</template>
+
+<div id="mail_tracker_group_modal" class="modal hidden" style="display:none;">
+  <h3 class="title">Add group to project</h3>
+  <p>
+    <label>Group:</label><br/>
+    <select id="modal_group_select" class="form-control">
+      <% Group.givable.order(:lastname).each do |group| %>
+        <option value="<%= group.id %>"><%= group.lastname %></option>
+      <% end %>
+    </select>
+  </p>
+  <p>
+    <label>Role to grant on this project:</label><br/>
+    <select id="modal_role_select" class="form-control">
+      <% Role.where(assignable: true).sorted.each do |role| %>
+        <option value="<%= role.id %>"><%= role.name %></option>
+      <% end %>
+    </select>
+  </p>
+  <p>
+    <button type="button" class="btn btn-success" id="modal_add_group_btn">Add</button>
+  </p>
 </div>
