@@ -19,6 +19,11 @@ every 5.minutes do
   runner "MailSource.each_mail_source_fetch_mails"
 end
 
+# Process email queue every minute
+every 1.minute do
+  runner "EmailQueue.process_batch(15)"
+end
+
 # every 30.minutes do
 #   runner "MailSource.check_issues_validity"
 # end
