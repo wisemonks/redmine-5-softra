@@ -280,12 +280,13 @@ class MailTrackerJob < ApplicationJob
     email.attachments.to_a.map do |attachment|
       # validate if attachment is bigger than 1000 bytes
       file = DataStringIo.new(attachment.filename, attachment.mime_type, attachment.body.decoded)
-      excel_content_types = %w[
+      document_content_types = %w[
         application/vnd.ms-excel
         application/vnd.openxmlformats-officedocument.spreadsheetml.sheet
+        application/vnd.oasis.opendocument.text
       ]
-      image_video_pdf_or_excel = (attachment.content_type.start_with?('image/') || attachment.content_type.start_with?('audio/') || attachment.content_type.start_with?('video/') || attachment.content_type.start_with?('application/pdf') || excel_content_types.include?(attachment.mime_type))
-      if (file.size > 10.kilobytes) && (file.size < Setting.attachment_max_size.to_i.kilobytes) && image_video_pdf_or_excel
+      allowed_type = (attachment.content_type.start_with?('image/') || attachment.content_type.start_with?('audio/') || attachment.content_type.start_with?('video/') || attachment.content_type.start_with?('application/pdf') || document_content_types.include?(attachment.mime_type))
+      if (file.size > 10.kilobytes) && (file.size < Setting.attachment_max_size.to_i.kilobytes) && allowed_type
         content_id = attachment.content_id.tr('<>', '') if attachment.inline? && attachment.content_id.present?
         doc = Attachment.new(
           file: DataStringIo.new(attachment.filename, attachment.mime_type, attachment.body.decoded),
