@@ -9,7 +9,7 @@ module IssuePatch
     after_save :add_assignee_as_watcher
 
 
-    validates :message_id, uniqueness: true, if: -> { message_id.present? }
+    validates :message_id, uniqueness: true, if: -> { has_attribute?(:message_id) && message_id.present? }
     scope :visible, lambda {|*args|
       joins(:project).joins("left join watchers wa on wa.watchable_id = issues.id")
                      .where(Issue.visible_condition(args.shift || User.current, *args))

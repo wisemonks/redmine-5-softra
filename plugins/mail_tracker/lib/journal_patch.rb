@@ -2,6 +2,8 @@ module JournalPatch
   def self.included(base)
     base.class_eval do
       alias_method :notified_watchers_without_child_filter, :notified_watchers
+      alias_method :notified_users_without_child_filter, :notified_users
+      alias_method :notified_mentions_without_child_filter, :notified_mentions
       # alias_method :notified_users_without_child_filter, :notified_users
       # alias_method :notified_mentions_without_child_filter, :notified_mentions
 
@@ -18,17 +20,47 @@ module JournalPatch
       }
       
       def reassign_from_customer_or_contractor
-        project_member = issue.project.members.find_by(user_id: issue.assigned_to_id)
-        customer_or_contractor = project_member&.roles&.where('roles.name in (?)', %w[Customer Contractor])
-        return if customer_or_contractor.nil? || customer_or_contractor.empty?
+        return if private_notes? || user_id != issue.assigned_to_id
+        return unless customer_or_contractor_assignee?
 
-        recent_non_customer_edit = issue.journals.where.not(user_id: issue.assigned_to_id, private_notes: true).order(id: :desc)&.first&.user_id
-        recent_non_customer_edit = issue.author_id if recent_non_customer_edit.nil?
-        return if recent_non_customer_edit != issue.assigned_to_id
+        assignment_journal = issue.journals.
+          where(:private_notes => false).
+          joins(:details).
+          where(:journal_details => {
+            :property => 'attr',
+            :prop_key => 'assigned_to_id',
+            :value => issue.assigned_to_id.to_s
+          }).
+          where.not(:user_id => issue.assigned_to_id).
+          order(:id => :desc).
+          first
+        previous_assignee = assignment_journal&.user
+        return if previous_assignee.nil? || customer_or_contractor?(previous_assignee)
 
-        issue.assigned_to_id = recent_non_customer_edit
-        issue.save
+        previous_assignee_id = issue.assigned_to_id
+        issue.update_column(:assigned_to_id, previous_assignee.id)
+        reassignment_journal = issue.journals.build(:user => user)
+        reassignment_journal.details.build(
+          :property => 'attr',
+          :prop_key => 'assigned_to_id',
+          :old_value => previous_assignee_id,
+          :value => previous_assignee.id
+        )
+        reassignment_journal.save!
       end
+
+      private
+
+      def customer_or_contractor_assignee?
+        customer_or_contractor?(issue.assigned_to)
+      end
+
+      def customer_or_contractor?(user)
+        member = issue.project.members.find_by(:user_id => user&.id)
+        member.present? && member.roles.where(:name => %w[Customer Contractor]).exists?
+      end
+
+      public
 
       def notified_watchers
         notified = notified_watchers_without_child_filter
@@ -65,6 +97,26 @@ module JournalPatch
           end
         end
         
+        notified
+      end
+
+      def notified_users
+        filter_by_child_visibility(notified_users_without_child_filter)
+      end
+
+      def notified_mentions
+        filter_by_child_visibility(notified_mentions_without_child_filter)
+      end
+
+      private
+
+      def filter_by_child_visibility(notified)
+        child_detail = details.detect { |d| d.property == 'attr' && d.prop_key == 'child_id' }
+        return notified unless child_detail
+
+        child_id = child_detail.value.presence || child_detail.old_value.presence
+        child_issue = Issue.find_by(id: child_id) if child_id
+        notified.select! { |user| child_issue.visible?(user) } if child_issue
         notified
       end
     end
