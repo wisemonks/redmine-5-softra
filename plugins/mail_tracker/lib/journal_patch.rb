@@ -35,6 +35,7 @@ module JournalPatch
           order(:id => :desc).
           first
         previous_assignee = assignment_journal&.user
+        previous_assignee ||= issue.author if issue.author_id != issue.assigned_to_id
         return if previous_assignee.nil? || customer_or_contractor?(previous_assignee)
 
         previous_assignee_id = issue.assigned_to_id
