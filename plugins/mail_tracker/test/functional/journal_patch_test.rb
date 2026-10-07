@@ -9,6 +9,8 @@ class JournalPatchTest < ActiveSupport::TestCase
            :watchers
 
   def setup
+    @notified_events = Setting.notified_events
+    Setting.notified_events = []
     @project = Project.find(1)
     @project.enabled_module_names = [:issue_tracking]
     
@@ -37,6 +39,10 @@ class JournalPatchTest < ActiveSupport::TestCase
       watchable: @parent_issue,
       user: @casual_user
     )
+  end
+
+  def teardown
+    Setting.notified_events = @notified_events
   end
 
   def test_casual_user_not_notified_when_private_subtask_created
@@ -154,5 +160,146 @@ class JournalPatchTest < ActiveSupport::TestCase
     assert_kind_of Array, notified_watchers, "notified_watchers should return an array"
     assert_kind_of Array, notified_users, "notified_users should return an array"
     assert_kind_of Array, notified_mentions, "notified_mentions should return an array"
+  end
+
+  def test_customer_public_reply_reassigns_issue_to_previous_internal_assignee
+    customer = customer_user
+    issue = issue_assigned_to(@admin_user)
+    create_assignment_journal(issue, customer, @admin_user)
+
+    issue.reload
+    issue.init_journal(customer, 'Customer reply')
+    issue.save!
+
+    assert_equal @admin_user.id, issue.reload.assigned_to_id
+    journal = issue.journals.order(:id).last
+    assert_equal customer.id, journal.user_id
+    assignment_detail = issue.journals.flat_map(&:details).find do |detail|
+      detail.prop_key == 'assigned_to_id' && detail.value == customer.id.to_s
+    end
+    assert_not_nil assignment_detail
+    reassignment_detail = journal.details.find do |detail|
+      detail.prop_key == 'assigned_to_id' && detail.value == @admin_user.id.to_s
+    end
+    assert_not_nil reassignment_detail
+  end
+
+  def test_customer_reply_falls_back_to_issue_author_without_assignment_history
+    customer = customer_user
+    issue = issue_assigned_to(@admin_user)
+    issue.update_column(:assigned_to_id, customer.id)
+
+    issue.reload
+    issue.init_journal(customer, 'Customer reply')
+    issue.save!
+
+    assert_equal @admin_user.id, issue.reload.assigned_to_id
+  end
+
+  def test_expired_initial_customer_assignment_returns_to_issue_author
+    customer = customer_user
+    issue = issue_assigned_to(customer)
+    expire_issue(issue)
+
+    CustomerIssueDueDateReassignment.call
+
+    assert_equal @admin_user.id, issue.reload.assigned_to_id
+  end
+
+  def test_expired_workflow_customer_assignment_returns_to_latest_comment_author
+    customer = customer_user
+    commenter = User.find(3)
+    issue = issue_assigned_to(@admin_user)
+
+    issue.reload
+    issue.init_journal(@admin_user, 'Internal response')
+    issue.save!
+    issue.clear_journal
+    create_assignment_journal(issue, customer, commenter, '')
+    expire_issue(issue)
+
+    CustomerIssueDueDateReassignment.call
+
+    assert_equal @admin_user.id, issue.reload.assigned_to_id
+  end
+
+  def test_customer_assignment_without_due_date_is_not_reassigned
+    customer = customer_user
+    issue = issue_assigned_to(customer)
+
+    CustomerIssueDueDateReassignment.call
+
+    assert_equal customer.id, issue.reload.assigned_to_id
+  end
+
+  def test_private_customer_journal_does_not_reassign_issue
+    customer = customer_user
+    issue = issue_assigned_to(@admin_user)
+    create_assignment_journal(issue, customer, @admin_user)
+
+    issue.reload
+    issue.init_journal(customer, 'Private customer note')
+    issue.current_journal.private_notes = true
+    issue.save!
+
+    assert_equal customer.id, issue.reload.assigned_to_id
+  end
+
+  def test_customer_journal_does_not_reassign_issue_when_customer_is_not_assignee
+    customer = customer_user
+    issue = issue_assigned_to(@admin_user)
+    create_assignment_journal(issue, @admin_user, customer)
+
+    issue.reload
+    issue.init_journal(customer, 'Customer comment')
+    issue.save!
+
+    assert_equal @admin_user.id, issue.reload.assigned_to_id
+  end
+
+  def test_contractor_reply_uses_the_latest_assignment_to_the_contractor
+    contractor = customer_user('Contractor')
+    issue = issue_assigned_to(@admin_user)
+    create_assignment_journal(issue, contractor, @admin_user)
+
+    issue.reload
+    issue.init_journal(contractor, 'Contractor reply')
+    issue.save!
+
+    assert_equal @admin_user.id, issue.reload.assigned_to_id
+  end
+
+  private
+
+  def customer_user(role_name = 'Customer')
+    role = Role.create!(name: role_name)
+    member = @project.members.find_by(user_id: @casual_user.id)
+    MemberRole.create!(member: member, role: role)
+    @casual_user
+  end
+
+  def issue_assigned_to(user)
+    Issue.create!(
+      project: @project,
+      tracker_id: 1,
+      author: @admin_user,
+      assigned_to: user,
+      subject: 'Reassignment test issue',
+      is_private: false,
+      status_id: 1
+    )
+  end
+
+  def create_assignment_journal(issue, assignee, author, notes = 'Assign external user')
+    User.current = author
+    issue.reload
+    issue.init_journal(author, notes)
+    issue.assigned_to = assignee
+    issue.save!
+    issue.clear_journal
+  end
+
+  def expire_issue(issue)
+    issue.update_column(:due_date, Date.current - 1.day)
   end
 end

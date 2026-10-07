@@ -430,6 +430,7 @@ class MailSource < ActiveRecord::Base
   end
 
   def self.each_mail_source_fetch_mails
+    CustomerIssueDueDateReassignment.call
     MailSource.where(enabled_sync: true).each do |mail_source|
       MailTrackerJob.perform_now(mail_source.id)
     end
